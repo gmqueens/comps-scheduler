@@ -1,16 +1,17 @@
 # SKHS Comps Scheduler
 
-A browser tool that builds the full timeline for a Science PhD comprehensive exam in the School of Kinesiology and Health Studies (SKHS) at Queen's University. Enter one start date. The tool sets every deadline in working days, following the *SKHS Comprehensive Exam Forms and Procedures (Science PhD)*, version of 2 November 2026.
+A browser tool that builds the full timeline for a Science PhD comprehensive exam in the School of Kinesiology and Health Studies (SKHS) at Queen's University. Enter one start date. The tool sets every deadline in business days, following the *SKHS Comprehensive Exam Forms and Procedures (Science PhD)*, version of 2 November 2026.
 
 **Use it online:** https://gmqueens.github.io/comps-scheduler/
 
 ## What it does
 
-- Schedules the initial organizing meeting, exam packages to the Chair and final revised packages.
-- Schedules each reading list release, memory aid deadline, written exam and response circulation.
-- Proposes six oral exam dates, 5 to 10 working days after the third written exam, with the examiner report deadline for each.
+- Schedules the initial organizing meeting, the reminder to Examiners, exam packages to the Chair and final approved packages.
+- Schedules each reading list release, memory aid deadline, written exam, 4-business-day break and response circulation.
+- Offers a calendar for picking the oral exam date from the eligible days, 5 to 10 business days after the third written exam, and adds the examiner report deadline.
 - Records the writer, topic area (i to v) and focus of each question, and checks the topic area rules.
-- Shows a month calendar and produces plain text of the schedule for email.
+- Stores the Examiners' email addresses and writes a ready-to-copy email to the committee with the schedule and the proposed oral date.
+- Shows a colour-coded month calendar with the breaks between exams highlighted.
 
 ## Running it
 
@@ -23,19 +24,22 @@ It runs on Windows, macOS, Linux, iOS and Android.
 
 ## Scheduling rules
 
-All intervals are working days.
+All intervals are business days: Monday to Friday, minus the days off listed below. As in the procedures, the first reading list is business day 1.
 
 | Step | Timing |
 |---|---|
-| Exam packages to Chair | 15 days after the organizing meeting |
-| Final revised packages to Chair | 5 days after packages are due |
-| First reading list to Candidate | 10 days after packages are due |
-| Each reading list to Candidate | 10 days before its written exam |
-| Memory aid for approval | 3 days before each written exam |
-| Response circulated | Within 3 days after each written exam |
-| Next written exam | At least 14 days after the previous one |
-| Examiner reports to Chair | 2 days before the oral |
-| Oral exam | 5 to 10 days after the final written exam |
+| Exam packages to Chair | 15 business days after the organizing meeting |
+| Reminder email to Examiners | 5 business days before packages are due |
+| Final approved packages to Chair | 5 business days after packages are due |
+| First reading list to Candidate | 10 business days after packages are due |
+| Each reading list to Candidate | 10 business days before its written exam |
+| Memory aid for approval | At least 3 business days before each written exam |
+| Break after each written exam | 4 business days |
+| Next reading list | The business day after the break |
+| Spacing of written exams | At least 14 business days between exams, so business days 11, 26 and 41 |
+| Response circulated | Within 3 business days after each written exam |
+| Examiner reports to Chair | At least 2 business days before the oral |
+| Oral exam | 5 to 10 business days after the final written exam |
 
 The start date can be set as the organizing meeting, the package deadline or the first reading list.
 
@@ -49,7 +53,7 @@ The tool skips weekends and these days off: New Year's Day, Family Day, Good Fri
 
 ## Privacy
 
-Names and settings are saved only in the local storage of the browser that entered them. The page sends no exam data to any server. Its only outside request loads the Google Fonts typefaces.
+Names, email addresses and settings are saved only in the local storage of the browser that entered them. The page sends no exam data to any server and never sends email itself. Its only outside request loads the Google Fonts typefaces.
 
 ## Changing the Chair
 

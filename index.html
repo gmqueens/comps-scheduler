@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="description" content="Schedules every deadline for an SKHS Science PhD comprehensive exam at Queen's University from one start date, in working days.">
+<meta name="description" content="Schedules every deadline for an SKHS Science PhD comprehensive exam at Queen's University from one start date, in business days.">
 <title>SKHS Comps Scheduler</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,600;0,8..60,700;1,8..60,600&display=swap">
@@ -19,6 +19,10 @@ body{margin:0}
   --oral:#2A6B52; --oral-soft:#DCEDE5;
   --closed:#8A92A1; --closed-soft:#ECEEF2;
   --warn:#9A4A16; --warn-soft:#F8E6D8;
+  --brk:#6A4CB4; --brk-soft:#EBE5F8;
+  --rel:#B4235A; --rel-soft:#FCE4EE; --c-rel:#D6336C; --c-rel-ink:#FFFFFF;
+  --c-com:#2F6FED; --c-com-ink:#FFFFFF; --c-cand:#0B8C99; --c-cand-ink:#FFFFFF; --c-exam:#F5A800; --c-exam-ink:#1E1500;
+  --c-oral:#138A40; --c-oral-ink:#FFFFFF; --c-brk:#8B5CF6; --c-brk-ink:#FFFFFF; --c-hol:#BCC3CF;
   --f-display:"Source Serif 4", Georgia, "Times New Roman", serif;
   --f-body:"Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --f-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
@@ -31,6 +35,10 @@ body{margin:0}
   --oral:#7DCBA9; --oral-soft:#163428;
   --closed:#7C8597; --closed-soft:#1D2431;
   --warn:#EFA371; --warn-soft:#3A2414;
+  --brk:#BCA6F2; --brk-soft:#2B2446;
+  --rel:#FF8DBE; --rel-soft:#3E1C2C; --c-rel:#FF6FAE; --c-rel-ink:#2A0716;
+  --c-com:#5E9BFF; --c-com-ink:#08101F; --c-cand:#2DD4BF; --c-cand-ink:#06201C; --c-exam:#FFC53D; --c-exam-ink:#201600;
+  --c-oral:#4ADE80; --c-oral-ink:#052010; --c-brk:#A78BFA; --c-brk-ink:#160C33; --c-hol:#4A5468;
   color-scheme:dark;
 }}
 :root[data-theme="dark"]{
@@ -41,6 +49,10 @@ body{margin:0}
   --oral:#7DCBA9; --oral-soft:#163428;
   --closed:#7C8597; --closed-soft:#1D2431;
   --warn:#EFA371; --warn-soft:#3A2414;
+  --brk:#BCA6F2; --brk-soft:#2B2446;
+  --rel:#FF8DBE; --rel-soft:#3E1C2C; --c-rel:#FF6FAE; --c-rel-ink:#2A0716;
+  --c-com:#5E9BFF; --c-com-ink:#08101F; --c-cand:#2DD4BF; --c-cand-ink:#06201C; --c-exam:#FFC53D; --c-exam-ink:#201600;
+  --c-oral:#4ADE80; --c-oral-ink:#052010; --c-brk:#A78BFA; --c-brk-ink:#160C33; --c-hol:#4A5468;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -59,7 +71,7 @@ aside{background:var(--surface);border:1px solid var(--line);border-radius:10px;
 fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;min-width:0}
 legend{padding:0;margin-bottom:8px}
 label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:500}
-input[type=text],input[type=date],input[type=number],select{font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 9px;width:100%;min-width:0}
+input[type=text],input[type=email],input[type=date],input[type=number],select{font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 9px;width:100%;min-width:0}
 input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .hint{font-size:12px;color:var(--muted);margin:0}
@@ -73,6 +85,9 @@ input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid 
 .qcard .qhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px;font-weight:600;color:var(--ink)}
 .qcard .qhead .mono{font-size:12px;color:var(--exam);font-weight:500}
 .qcard input[type=text],.qcard select{background:var(--surface)}
+.person{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.person-h{font-size:13px;font-weight:600;color:var(--ink)}
+.person input[type=text],.person input[type=email]{background:var(--surface)}
 button{font:inherit;cursor:pointer}
 .btn{background:var(--accent);color:var(--surface);border:0;border-radius:6px;padding:8px 12px;font-size:13px;font-weight:600}
 .btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
@@ -119,6 +134,30 @@ main{display:flex;flex-direction:column;gap:22px;min-width:0}
 .oral-opt .s{font-size:12px;color:var(--muted)}
 .oral-opt .tag{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--oral);font-weight:600}
 .oral-opt[aria-pressed="true"]{background:var(--oral-soft);border-color:var(--oral);box-shadow:inset 0 0 0 1px var(--oral)}
+/* oral date picker */
+.picker{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,360px));gap:22px}
+.pmonth h4{margin:0 0 6px;font-size:14px;font-weight:600}
+.pgrid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:3px}
+.pday{aspect-ratio:1;max-width:100%;min-width:0;display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;padding:4px 5px;font-family:var(--f-mono);font-size:13px;line-height:1;color:var(--muted);background:transparent;border:0;border-radius:6px}
+.pday .pk{font-family:var(--f-body);font-size:10px;font-weight:600;letter-spacing:.02em}
+.pday.blank{visibility:hidden}
+.pday.wknd{color:var(--closed)}
+.pday.hol{color:var(--muted);background:repeating-linear-gradient(135deg,var(--c-hol) 0 3px,transparent 3px 6px)}
+.pday.e3{background:var(--c-exam);color:var(--c-exam-ink);font-weight:600}
+.pday.opt{cursor:pointer;color:var(--c-oral);background:var(--surface);box-shadow:inset 0 0 0 2px var(--c-oral);font-weight:600}
+.pday.opt:hover{background:var(--oral-soft)}
+.pday.sel,.pday.sel:hover{background:var(--c-oral);color:var(--c-oral-ink);box-shadow:none}
+.pick-info{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-radius:8px;background:var(--oral-soft)}
+.pick-sel{display:flex;flex-direction:column;gap:2px;min-width:0}
+.pick-sel .k{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:var(--oral)}
+.pick-sel .v{font-family:var(--f-mono);font-size:17px;font-weight:500}
+.pick-sel .s{font-size:13px;color:var(--muted)}
+/* email */
+.mail{display:flex;flex-direction:column;border-top:1px solid var(--line-soft)}
+.mail-row{display:grid;grid-template-columns:5.5rem minmax(0,1fr);gap:12px;align-items:baseline;padding:8px 0;border-bottom:1px solid var(--line-soft)}
+.mk{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600;color:var(--muted)}
+.mv{font-size:14px;overflow-wrap:anywhere}
+.mv.empty{color:var(--muted);font-style:italic}
 /* timeline */
 .tl{display:flex;flex-direction:column}
 .phase{margin-top:14px;padding-bottom:6px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
@@ -137,6 +176,8 @@ main{display:flex;flex-direction:column;gap:22px;min-width:0}
 .k-committee .pill{background:var(--accent-soft);color:var(--accent)}
 .k-cand .pill{background:var(--cand-soft);color:var(--cand)}
 .k-exam .pill{background:var(--exam-soft);color:var(--exam)}
+.k-release .pill{background:var(--rel-soft);color:var(--rel)}
+.k-rest .pill{background:var(--brk-soft);color:var(--brk)}
 .k-oral .pill{background:var(--oral-soft);color:var(--oral)}
 .ev.k-exam .date{color:var(--exam)}
 .ev.k-oral .date{color:var(--oral)}
@@ -150,13 +191,16 @@ main{display:flex;flex-direction:column;gap:22px;min-width:0}
 .grid .dow{font-size:10px;color:var(--muted);text-align:center;padding-bottom:2px;font-weight:600}
 .cell{aspect-ratio:1;max-width:100%;font-family:var(--f-mono);font-size:11px;display:flex;align-items:flex-start;justify-content:flex-end;padding:3px 4px;border-radius:4px;position:relative;color:var(--ink);background:transparent}
 .cell.wknd{color:var(--closed)}
-.cell.hol{color:var(--closed);background:repeating-linear-gradient(135deg,var(--closed-soft) 0 3px,transparent 3px 6px)}
-.cell.committee{background:var(--accent-soft);color:var(--accent);font-weight:500}
-.cell.cand{background:var(--cand-soft);color:var(--cand);font-weight:500}
-.cell.exam{background:var(--exam);color:var(--surface);font-weight:500}
-.cell.oralopt{box-shadow:inset 0 0 0 1.5px var(--oral);color:var(--oral);font-weight:500}
-.cell.oral{background:var(--oral);color:var(--surface);font-weight:500}
+.cell.hol{color:var(--muted);background:repeating-linear-gradient(135deg,var(--c-hol) 0 3px,transparent 3px 6px)}
+.cell.committee{background:var(--c-com);color:var(--c-com-ink);font-weight:600}
+.cell.cand{background:var(--c-cand);color:var(--c-cand-ink);font-weight:600}
+.cell.release{background:var(--c-rel);color:var(--c-rel-ink);font-weight:600}
+.cell.exam{background:var(--c-exam);color:var(--c-exam-ink);font-weight:600}
+.cell.oralopt{box-shadow:inset 0 0 0 2px var(--c-oral);color:var(--c-oral);font-weight:600}
+.cell.oral{background:var(--c-oral);color:var(--c-oral-ink);font-weight:600}
 .cell.blank{visibility:hidden}
+.cell.brk{box-shadow:inset 0 -4px 0 var(--c-brk)}
+.cell.brk:not(.committee):not(.cand):not(.release):not(.exam):not(.oral){background:var(--c-brk);color:var(--c-brk-ink);font-weight:600}
 /* holidays + copy */
 .hols{display:flex;flex-direction:column;gap:0}
 .hol-row{display:grid;grid-template-columns:9.5rem minmax(0,1fr);gap:12px;font-size:13px;padding:6px 0;border-bottom:1px solid var(--line-soft)}
@@ -172,7 +216,7 @@ textarea{width:100%;min-height:240px;font-family:var(--f-mono);font-size:12px;li
   <header>
     <div class="eyebrow">SKHS · Science PhD comprehensive exam</div>
     <h1>Comps Scheduler</h1>
-    <p class="lede">Enter a start date and the three questions. The schedule follows the SKHS Forms and Procedures (version of 2 Nov 2026). Working days exclude weekends, Ontario statutory holidays, the Queen's winter closure and any dates you block.</p>
+    <p class="lede">Enter a start date and the three questions. The schedule follows the SKHS Forms and Procedures (version of 2 Nov 2026). Business days exclude weekends, Ontario statutory holidays, the Queen's winter closure and any dates you block.</p>
   </header>
 
   <div class="layout">
@@ -189,20 +233,30 @@ textarea{width:100%;min-height:240px;font-family:var(--f-mono);font-size:12px;li
             <option value="rl1">First reading list to Candidate</option>
           </select>
         </label>
-        <label for="gap">Working days between written exams
+        <label for="gap">Business days between written exams
           <input type="number" id="gap" min="14" max="40" step="1" value="14">
         </label>
-        <p class="hint">Minimum is 14. At 14, each new reading list goes out 4 working days after the previous exam.</p>
+        <p class="hint">Minimum is 14, as the procedures require. At 14, each exam is followed by a 4-business-day break and the next reading list goes out the business day after.</p>
       </fieldset>
 
       <fieldset>
         <legend><h3>Committee</h3></legend>
         <div class="fixed"><span class="k">Chair</span><span class="v" id="chairName">Dr. Gerome Manson</span></div>
         <label for="p-cand">Candidate<input type="text" id="p-cand" placeholder="Candidate name"></label>
-        <label for="p-sup">Supervisor (Examiner 1)<input type="text" id="p-sup" placeholder="Supervisor name"></label>
-        <div class="row2">
-          <label for="p-ex2">Examiner 2<input type="text" id="p-ex2" placeholder="Name"></label>
-          <label for="p-ex3">Examiner 3<input type="text" id="p-ex3" placeholder="Name"></label>
+        <div class="person">
+          <div class="person-h">Examiner 1 · Supervisor</div>
+          <label for="p-sup">Name<input type="text" id="p-sup" placeholder="Supervisor name"></label>
+          <label for="e-sup">Email<input type="email" id="e-sup" placeholder="name@queensu.ca" autocomplete="off"></label>
+        </div>
+        <div class="person">
+          <div class="person-h">Examiner 2</div>
+          <label for="p-ex2">Name<input type="text" id="p-ex2" placeholder="Name"></label>
+          <label for="e-ex2">Email<input type="email" id="e-ex2" placeholder="name@queensu.ca" autocomplete="off"></label>
+        </div>
+        <div class="person">
+          <div class="person-h">Examiner 3</div>
+          <label for="p-ex3">Name<input type="text" id="p-ex3" placeholder="Name"></label>
+          <label for="e-ex3">Email<input type="email" id="e-ex3" placeholder="name@queensu.ca" autocomplete="off"></label>
         </div>
       </fieldset>
 
@@ -262,18 +316,10 @@ textarea{width:100%;min-height:240px;font-family:var(--f-mono);font-size:12px;li
         <div class="notes" id="qnotes"></div>
       </section>
 
-      <section class="panel" aria-labelledby="h-oral">
-        <div class="panel-head">
-          <h2 id="h-oral">Proposed oral exam dates</h2>
-          <span class="hint">5 to 10 working days after written exam 3. Select one to lock it in.</span>
-        </div>
-        <div class="orals" id="orals"></div>
-      </section>
-
       <section class="panel" aria-labelledby="h-tl">
         <div class="panel-head">
           <h2 id="h-tl">Full schedule</h2>
-          <span class="hint">Day numbers count working days from the organizing meeting.</span>
+          <span class="hint">Business days run Monday to Friday and are numbered as in the procedures, with the first reading list as day 1. Weekends never count, and neither do the holidays and closures switched on in the settings.</span>
         </div>
         <div class="tl" id="timeline"></div>
       </section>
@@ -281,14 +327,32 @@ textarea{width:100%;min-height:240px;font-family:var(--f-mono);font-size:12px;li
       <section class="panel" aria-labelledby="h-cal">
         <div class="panel-head"><h2 id="h-cal">Calendar</h2></div>
         <div class="legend">
-          <span><i class="sw" style="background:var(--accent-soft)"></i>Committee deadline</span>
-          <span><i class="sw" style="background:var(--cand-soft)"></i>Candidate step</span>
-          <span><i class="sw" style="background:var(--exam)"></i>Written exam</span>
-          <span><i class="sw" style="box-shadow:inset 0 0 0 1.5px var(--oral)"></i>Oral option</span>
-          <span><i class="sw" style="background:var(--oral)"></i>Oral (selected)</span>
-          <span><i class="sw" style="background:repeating-linear-gradient(135deg,var(--closed-soft) 0 3px,transparent 3px 6px);border:1px solid var(--line)"></i>Holiday or blocked</span>
+          <span><i class="sw" style="background:var(--c-com)"></i>Committee deadline</span>
+          <span><i class="sw" style="background:var(--c-cand)"></i>Candidate step</span>
+          <span><i class="sw" style="background:var(--c-rel)"></i>Reading list sent to Candidate</span>
+          <span><i class="sw" style="background:var(--c-exam)"></i>Written exam</span>
+          <span><i class="sw" style="box-shadow:inset 0 0 0 2px var(--c-oral)"></i>Oral option</span>
+          <span><i class="sw" style="background:var(--c-oral)"></i>Oral (selected)</span>
+          <span><i class="sw" style="background:var(--c-brk)"></i>4-business-day break</span>
+          <span><i class="sw" style="background:repeating-linear-gradient(135deg,var(--c-hol) 0 3px,transparent 3px 6px);border:1px solid var(--line)"></i>Holiday or blocked</span>
         </div>
+        <p class="hint">Each written exam is followed by a 4-business-day break. After exams 1 and 2 the next reading list goes out the following business day; after exam 3, oral preparation begins. Weekends and holidays do not count. Hover a day to see its number.</p>
         <div class="months" id="months"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-oral">
+        <div class="panel-head">
+          <h2 id="h-oral">Oral exam date</h2>
+          <span class="hint">Outlined days are 5 to 10 business days after written exam 3. Select one to propose it.</span>
+        </div>
+        <div class="picker" id="picker"></div>
+        <div class="legend">
+          <span><i class="sw" style="background:var(--c-exam)"></i>Written exam 3</span>
+          <span><i class="sw" style="box-shadow:inset 0 0 0 2px var(--c-oral)"></i>Possible oral date</span>
+          <span><i class="sw" style="background:var(--c-oral)"></i>Proposed oral date</span>
+          <span><i class="sw" style="background:repeating-linear-gradient(135deg,var(--c-hol) 0 3px,transparent 3px 6px);border:1px solid var(--line)"></i>Holiday or blocked</span>
+        </div>
+        <div class="pick-info" id="pickInfo"></div>
       </section>
 
       <section class="panel" aria-labelledby="h-hol">
@@ -296,13 +360,21 @@ textarea{width:100%;min-height:240px;font-family:var(--f-mono);font-size:12px;li
         <div class="hols" id="hols"></div>
       </section>
 
-      <section class="panel" aria-labelledby="h-copy">
-        <div class="panel-head"><h2 id="h-copy">Schedule text for email</h2></div>
-        <textarea id="copyText" readonly aria-label="Schedule as plain text"></textarea>
+      <section class="panel" aria-labelledby="h-mail">
+        <div class="panel-head"><h2 id="h-mail">Email the committee</h2></div>
+        <div class="mail">
+          <div class="mail-row"><span class="mk">To</span><span class="mv" id="mailTo"></span></div>
+          <div class="mail-row"><span class="mk">Subject</span><span class="mv" id="mailSubj"></span></div>
+        </div>
+        <div class="notes" id="mailNotes"></div>
+        <textarea id="copyText" readonly aria-label="Email message"></textarea>
         <div class="copy-row">
-          <button class="btn" id="copyBtn" type="button">Copy schedule</button>
+          <button class="btn" id="copyTo" type="button">Copy addresses</button>
+          <button class="btn ghost" id="copySubj" type="button">Copy subject</button>
+          <button class="btn ghost" id="copyBtn" type="button">Copy message</button>
           <span class="status" id="copyStatus" role="status"></span>
         </div>
+        <p class="hint">This page never sends email. Copy the addresses, subject and message into a new email.</p>
       </section>
     </main>
   </div>
@@ -322,8 +394,10 @@ const fmt = d => DOW[d.getDay()]+' '+d.getDate()+' '+MON[d.getMonth()]+' '+d.get
 const fmtShort = d => DOW[d.getDay()]+' '+d.getDate()+' '+MON[d.getMonth()];
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const listJoin = a => a.length < 2 ? a.join('') : a.slice(0,-1).join(', ')+' and '+a[a.length-1];
+const validEmail = s => /^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/.test(s);
 
 const CHAIR = 'Dr. Gerome Manson';
+const SIGNOFF = CHAIR.replace(/^Dr\.?\s+/, '');
 const AREAS = [
   {id:'gen', num:'i', label:'General background'},
   {id:'dev', num:'ii', label:'Current developments'},
@@ -385,7 +459,7 @@ function holidaysFor(y){
 function nextMonday(){ let d = new Date(); d = new Date(d.getFullYear(), d.getMonth(), d.getDate()+1); while (d.getDay()!==1) d = addDays(d,1); return iso(d); }
 const DEFAULTS = {
   start: nextMonday(), anchor:'meeting', gap:14,
-  cand:'', sup:'', ex2:'', ex3:'',
+  cand:'', sup:'', ex2:'', ex3:'', supEmail:'', ex2Email:'', ex3Email:'',
   order:['sup','ex2','ex3'], areas:['gen','',''], focus:['','',''],
   off:{}, blocks:[], oralK:null
 };
@@ -403,6 +477,8 @@ try {
   if (saved && typeof saved === 'object') S = Object.assign(fresh(), saved);
 } catch(e){ S = fresh(); }
 delete S.chair;
+['cand','sup','ex2','ex3','supEmail','ex2Email','ex3Email'].forEach(k => { if (typeof S[k] !== 'string') S[k] = ''; });
+if (![5,6,7,8,9,10].includes(S.oralK)) S.oralK = null;
 ['order','areas','focus'].forEach(k => { if (!Array.isArray(S[k]) || S[k].length !== 3) S[k] = fresh()[k]; });
 if (S.order.slice().sort().join() !== 'ex2,ex3,sup') S.order = ['sup','ex2','ex3'];
 S.areas = S.areas.map(a => areaById(a) ? a : '');
@@ -412,7 +488,7 @@ if (!S.off || typeof S.off !== 'object') S.off = {};
 if (!Array.isArray(S.blocks)) S.blocks = [];
 const save = () => { try { localStorage.setItem('skhs-comps-v2', JSON.stringify(S)); } catch(e){} };
 
-/* ---------- working day engine ---------- */
+/* ---------- business day engine ---------- */
 let blocked = new Map();
 function buildBlocked(y0, y1){
   blocked = new Map();
@@ -465,13 +541,15 @@ function compute(){
   else { rl1 = start; pkg = addWD(rl1,-10); meeting = addWD(pkg,-15); }
   const finalPkg = addWD(pkg,5);
   rl1 = addWD(pkg,10);
-  const gap = Math.max(14, Number(S.gap)||14);
+  const gap = Math.max(14, Number(S.gap)||14); // business days strictly between written exams
   const exams = [addWD(rl1,10)];
-  exams.push(addWD(exams[0],gap)); exams.push(addWD(exams[1],gap));
+  exams.push(addWD(exams[0],gap+1)); exams.push(addWD(exams[1],gap+1));
   const per = exams.map(e => ({ exam:e, rl:addWD(e,-10), mem:addWD(e,-3), resp:addWD(e,3) }));
+  const reminder = addWD(pkg,-5);
+  const breaks = per.map((p,i) => { const end = i < 2 ? addWD(per[i+1].rl,-1) : addWD(p.exam,4); return {start:addWD(p.exam,1), end, n:wdFrom(p.exam,end)}; });
   const orals = [];
   for (let k = 5; k <= 10; k++){ const o = addWD(exams[2],k); orals.push({k, date:o, report:addWD(o,-2)}); }
-  return {raw, start, moved, meeting, pkg, finalPkg, rl1, exams, per, orals, gap};
+  return {raw, start, moved, meeting, reminder, pkg, finalPkg, rl1, exams, per, breaks, orals, gap};
 }
 
 function areaChecks(){
@@ -506,35 +584,43 @@ function buildEvents(R){
   const E = [];
   const planned = S.areas.every(Boolean) ? ' Planned areas: '+S.areas.map(a => areaById(a).label).join('; ')+'.' : '';
   E.push({d:R.meeting, phase:'Setup', kind:'committee', tag:'Meeting', title:'Initial organizing meeting',
-    detail:'Choose 3 topic areas and complete the Planning Form (Appendix C).'+planned+' Accommodations are arranged before this meeting.',
+    detail:'Review the process, identify 3 topic areas and complete the Planning Form (Appendix C).'+planned+' Zoom or Teams attendance is allowed. Accommodations are arranged before this meeting.',
     who:N.sup+' convenes', with:'Full committee and Candidate'});
-  E.push({d:R.pkg, phase:'Setup', kind:'committee', tag:'Due', title:'Exam packages to Chair',
-    detail:'Context statement, reading list (about 15 to 20 articles) and a question answerable in 4 hours with expected output stated.',
+  E.push({d:R.meeting, phase:'Setup', kind:'committee', tag:'Due', title:'Signed Planning Form to Grad Coordinator',
+    detail:'Immediately after the initial meeting.', who:N.chair, with:'to Grad Coordinator'});
+  E.push({d:R.reminder, phase:'Setup', kind:'committee', tag:'Reminder', title:'Reminder email to Examiners',
+    detail:'Exam packages are due in 5 business days.', who:'Grad Coordinator', with:'to all 3 Examiners'});
+  E.push({d:R.pkg, phase:'Setup', kind:'committee', tag:'Due', title:'Exam packages to Chair for approval',
+    detail:'Context statement, exam question with the expected output stated (length, figures, formatting) and PDF copies of the reading list (about 15 to 20 articles). Due at least 10 business days before the first reading list.',
     who:'All 3 Examiners', with:'to '+N.chair});
-  E.push({d:R.finalPkg, phase:'Setup', kind:'committee', tag:'Due', title:'Final revised packages to Chair',
-    detail:'Chair checks packages and avoids overlap between questions.', who:'All 3 Examiners', with:'to '+N.chair});
+  E.push({d:R.finalPkg, phase:'Setup', kind:'committee', tag:'Due', title:'Final approved packages to Chair',
+    detail:'Revised versions after the Chair confirms the questions do not overlap. Due at least 5 business days before the first reading list.', who:'All 3 Examiners', with:'to '+N.chair});
   R.per.forEach((p,i) => {
     const q = N[S.order[i]];
     const area = areaLabel(i);
     const qline = area ? area+' question from '+q : 'Question from '+q+', topic area not chosen';
     const focus = S.focus[i] ? ' Focus: '+S.focus[i]+'.' : '';
     const ph = 'Written exam '+(i+1);
-    E.push({d:p.rl, phase:ph, kind:'cand', tag:'Release', area, title:'Reading list and context statement '+(i+1)+' to Candidate',
-      detail:qline+'.'+focus+(i>0 && R.gap===14 ? ' Released 4 working days after written exam '+i+'.' : ''),
+    E.push({d:p.rl, phase:ph, kind:'release', tag:'Release', area, title:'Reading list and context statement '+(i+1)+' to Candidate',
+      detail:qline+'.'+focus+' Sent 10 business days before the exam, with a reminder of the exam date, room and time.'+(i>0 ? ' Goes out the business day after the '+R.breaks[i-1].n+'-business-day break.' : ''),
       who:'Grad Coordinator', with:'to '+N.cand});
     E.push({d:p.mem, phase:ph, kind:'cand', tag:'Due', title:'Memory aid sheet for approval',
-      detail:'One page, maximum 500 words.', who:N.cand, with:'to '+q});
+      detail:'Optional. One page, maximum 500 words, due at least 3 business days before the exam. If approved, the Examiner forwards it to the Grad Coordinator.', who:N.cand, with:'to '+q});
     E.push({d:p.exam, phase:ph, kind:'exam', tag:'Exam', area, title:'Written exam '+(i+1),
-      detail:'4 hours, in person, offline SKHS computer. Citations as (First Author, Year).', who:N.cand, with:qline});
+      detail:'4 hours on an offline SKHS computer, answered in Word. Handwritten parts are allowed. In-text citations as (First Author, Year); no reference list.', who:N.cand, with:qline});
+    const br = R.breaks[i];
+    E.push({d:br.start, phase:ph, kind:'rest', tag:'Break', title:br.n+'-business-day break',
+      detail:'Runs to '+fmt(br.end)+'. '+(i < 2 ? 'No reading list during the break. The next one goes out the following business day.' : 'Oral preparation follows.'), who:N.cand, with:''});
     E.push({d:p.resp, phase:ph, kind:'cand', tag:'By', title:'Response '+(i+1)+' circulated',
-      detail:'To the Candidate and all 3 Examiners, within 3 working days.', who:'Grad Coordinator', with:''});
+      detail:i < 2 ? 'Exam package and written response, in PDF, to the Candidate and all 3 Examiners, copying the Chair. Only this question\'s Examiner assesses it; all 3 read it.' : 'Exam packages and all 3 written responses, in PDF, to every Exam Committee member. Due within 3 business days of the final written exam.',
+      who:'Grad Coordinator', with:''});
   });
   if (S.oralK){
     const o = R.orals.find(x => x.k===S.oralK);
     E.push({d:o.report, phase:'Oral exam', kind:'committee', tag:'Due', title:'Examiner reports to Chair',
-      detail:'Satisfactory or unsatisfactory, by email, for all 3 written responses.', who:'Each Examiner', with:'to '+N.chair});
+      detail:'Brief email saying whether the response to their own question is satisfactory or unsatisfactory, with its strengths and weaknesses. Due at least 2 business days before the oral.', who:'Each Examiner', with:'to '+N.chair});
     E.push({d:o.date, phase:'Oral exam', kind:'oral', tag:'Oral', title:'Oral exam',
-      detail:'Committee meets first without the Candidate. Two rounds of about 20 to 25 minutes per Examiner. Usually under 3 hours. Outcome Form (Appendix D) to the Grad Coordinator after.',
+      detail:'The committee first discusses the responses without the Candidate. Two rounds of about 20 to 25 minutes per Examiner, usually no more than 3 hours. The Candidate may bring printed copies of their responses only. The Chair and Examiners then sign the Outcome Form (Appendix D) for the Grad Coordinator.',
       who:N.chair+' chairs', with:N.cand+' and all 3 Examiners'});
   }
   E.sort((a,b) => a.d - b.d);
@@ -542,6 +628,8 @@ function buildEvents(R){
 }
 
 /* ---------- render ---------- */
+const MAIL = {to:'', subj:'', body:''};
+
 function render(){
   save();
   const R = compute();
@@ -565,16 +653,16 @@ function render(){
   $('#keys').innerHTML = keys.map(k => `<div class="key ${k[2]}"><span class="k">${k[0]}</span><span class="v">${k[1]}</span>${k[3] ? `<span class="a">${esc(k[3])}</span>` : ''}</div>`).join('');
 
   const endRef = oralSel ? oralSel.date : R.orals[0].date;
-  const wdTotal = wdFrom(R.pkg, endRef);
-  const weeks = Math.round((endRef - R.meeting)/(7*864e5)*10)/10;
-  $('#spanInfo').textContent = `${wdFrom(R.meeting,endRef)} working days from meeting to ${oralSel?'oral':'earliest oral'} (${weeks} weeks)`;
+  const bdOral = wdFrom(R.rl1, endRef) + 1;
+  const weeks = Math.round((endRef - R.rl1)/(7*864e5)*10)/10;
+  $('#spanInfo').textContent = `${oralSel ? 'Proposed' : 'Earliest'} oral on business day ${bdOral} (${weeks} weeks after the first reading list)`;
 
   const notes = [];
-  if (R.moved) notes.push(['warn', `<b>${fmt(R.raw)}</b> is not a working day. The schedule starts on <b>${fmt(R.start)}</b>.`]);
-  notes.push(['', `Packages to Chair through ${oralSel?'the oral':'the earliest oral'} spans <b>${wdTotal} working days</b>. The procedures estimate 50 to 55 working days for the whole process.`]);
+  if (R.moved) notes.push(['warn', `<b>${fmt(R.raw)}</b> is not a business day. The schedule starts on <b>${fmt(R.start)}</b>.`]);
+  notes.push(['', `From the first reading list (business day 1) to the ${oralSel ? 'proposed' : 'earliest possible'} oral is <b>${bdOral} business days</b>. The procedures expect about 50 to 55.`]);
   const winBlocked = [...blocked.keys()].filter(k => { const d = parseISO(k); return d >= R.meeting && d <= R.orals[5].date && d.getDay()%6!==0; });
   if (winBlocked.length) notes.push(['', `${winBlocked.length} weekday${winBlocked.length>1?'s':''} in this window ${winBlocked.length>1?'are':'is'} non-working, which pushes later dates back.`]);
-  if (!S.oralK) notes.push(['', 'Select an oral date below to add the oral and the examiner report deadline to the schedule.']);
+  if (!S.oralK) notes.push(['', 'Pick a date in the Oral exam date section below to add the oral and the examiner report deadline to the schedule.']);
   $('#notes').innerHTML = notes.map(n => `<div class="note ${n[0]}">${n[1]}</div>`).join('');
 
   // question plan
@@ -594,16 +682,41 @@ function render(){
   }).join('');
   $('#qnotes').innerHTML = areaChecks().map(n => `<div class="note ${n[0]}">${n[1]}</div>`).join('');
 
-  // orals
-  $('#orals').innerHTML = R.orals.map(o => `
-    <button type="button" class="oral-opt" data-k="${o.k}" aria-pressed="${S.oralK===o.k}">
-      <span class="tag">+${o.k} working days${o.k===5?' · earliest':o.k===10?' · latest':''}</span>
-      <span class="d">${fmt(o.date)}</span>
-      <span class="s">Reports due ${fmtShort(o.report)}</span>
-    </button>`).join('');
-  document.querySelectorAll('.oral-opt').forEach(b => b.addEventListener('click', () => {
+  // oral date picker
+  const optByIso = new Map(R.orals.map(o => [iso(o.date), o]));
+  const e3 = iso(R.exams[2]);
+  let ph = '';
+  for (let m = new Date(R.exams[2].getFullYear(), R.exams[2].getMonth(), 1); m <= R.orals[5].date; m = new Date(m.getFullYear(), m.getMonth()+1, 1)){
+    const mname = MONL[m.getMonth()]+' '+m.getFullYear();
+    ph += `<div class="pmonth"><h4>${mname}</h4><div class="pgrid" role="group" aria-label="${mname}">`;
+    ph += ['M','T','W','T','F','S','S'].map(x => `<div class="dow" aria-hidden="true">${x}</div>`).join('');
+    const lead = (m.getDay()+6)%7;
+    for (let i = 0; i < lead; i++) ph += '<div class="pday blank" aria-hidden="true"></div>';
+    const dim = new Date(m.getFullYear(), m.getMonth()+1, 0).getDate();
+    for (let day = 1; day <= dim; day++){
+      const d = new Date(m.getFullYear(), m.getMonth(), day), k = iso(d), o = optByIso.get(k);
+      if (o){
+        const sel = S.oralK === o.k;
+        ph += `<button type="button" class="pday opt${sel ? ' sel' : ''}" data-k="${o.k}" aria-pressed="${sel}" aria-label="${esc(fmt(d))}, ${o.k} business days after written exam 3. Reports due ${esc(fmt(o.report))}." title="${esc(fmt(d))}: reports due ${esc(fmtShort(o.report))}"><span>${day}</span><span class="pk">${sel ? '✓' : '+'+o.k}</span></button>`;
+      } else {
+        let cls = '', title = fmt(d), tag = '';
+        if (k === e3){ cls = 'e3'; title += ': written exam 3'; tag = '<span class="pk">Exam</span>'; }
+        else if (d.getDay()===0 || d.getDay()===6) cls = 'wknd';
+        else if (blocked.has(k)){ cls = 'hol'; title += ': '+blocked.get(k); }
+        ph += `<div class="pday ${cls}" title="${esc(title)}"><span>${day}</span>${tag}</div>`;
+      }
+    }
+    ph += '</div></div>';
+  }
+  $('#picker').innerHTML = ph;
+  document.querySelectorAll('.pday.opt').forEach(b => b.addEventListener('click', () => {
     const k = Number(b.dataset.k); S.oralK = S.oralK===k ? null : k; render();
+    const again = document.querySelector(`.pday.opt[data-k="${k}"]`); if (again) again.focus();
   }));
+  $('#pickInfo').innerHTML = oralSel
+    ? `<div class="pick-sel"><span class="k">Proposed oral date</span><span class="v">${fmt(oralSel.date)}</span><span class="s">${oralSel.k} business days after written exam 3. Examiner reports due ${fmt(oralSel.report)}.${oralSel.k===5 ? ' This is the first business day after the 4-day break, so the Candidate has no preparation day in between.' : ''}</span></div><button type="button" class="btn ghost" id="clearOral">Clear date</button>`
+    : `<div class="pick-sel"><span class="k">No date picked</span><span class="s">Written exam 3 is on ${fmt(R.exams[2])}. The oral can fall between ${fmtShort(R.orals[0].date)} and ${fmt(R.orals[5].date)}.</span></div>`;
+  const clr = $('#clearOral'); if (clr) clr.addEventListener('click', () => { S.oralK = null; render(); });
 
   // timeline
   const phaseSub = { 'Setup':'Committee prepares exam packages', 'Oral exam':'Chaired by '+N.chair };
@@ -614,22 +727,29 @@ function render(){
   for (const e of E){
     if (e.phase !== lastPhase){ html += `<div class="phase"><h3>${e.phase}</h3><span class="sub">${esc(phaseSub[e.phase]||'')}</span></div>`; lastPhase = e.phase; }
     html += `<div class="ev k-${e.kind}">
-      <div class="date">${fmtShort(e.d)}<small>${e.d.getFullYear()} · Day ${wdFrom(R.meeting,e.d)}</small></div>
+      <div class="date">${fmtShort(e.d)}<small>${e.d.getFullYear()} · ${e.d >= R.rl1 ? 'Business day '+(wdFrom(R.rl1,e.d)+1) : wdFrom(e.d,R.rl1)+' business days before reading list 1'}</small></div>
       <div class="what"><strong><span class="pill">${e.tag}</span>${esc(e.title)}</strong><span>${esc(e.detail)}</span></div>
       <div class="who"><b>${esc(e.who)}</b>${esc(e.with)}</div>
     </div>`;
   }
   if (!S.oralK){
-    html += `<div class="phase"><h3>Oral exam</h3><span class="sub">Window ${fmtShort(R.orals[0].date)} to ${fmtShort(R.orals[5].date)}. Choose a date above.</span></div>`;
+    html += `<div class="phase"><h3>Oral exam</h3><span class="sub">Window ${fmtShort(R.orals[0].date)} to ${fmtShort(R.orals[5].date)}. Pick a date in the Oral exam date section.</span></div>`;
   }
   $('#timeline').innerHTML = html;
 
   // calendar
   const marks = new Map();
   const mark = (d, cls, label) => { const k = iso(d); if (!marks.has(k)) marks.set(k, {cls:[], labels:[]}); const m = marks.get(k); m.cls.push(cls); m.labels.push(label); };
-  for (const e of E) mark(e.d, e.kind, e.title+(e.area ? ' ('+e.area+')' : ''));
+  for (const e of E) if (e.kind !== 'rest') mark(e.d, e.kind, e.title+(e.area ? ' ('+e.area+')' : ''));
   for (const o of R.orals) if (S.oralK!==o.k) mark(o.date, 'oralopt', 'Oral option (+'+o.k+')');
-  const rank = ['oral','exam','oralopt','committee','cand'];
+  const rank = ['oral','exam','oralopt','release','committee','cand'];
+  const brk = new Map();
+  R.breaks.forEach((br, i) => {
+    let n = 0;
+    for (let d = br.start; d <= br.end; d = addDays(d, 1)){
+      if (isWorking(d)){ n++; brk.set(iso(d), {exam:i+1, n, total:br.n}); }
+    }
+  });
   const first = new Date(R.meeting.getFullYear(), R.meeting.getMonth(), 1);
   const lastD = R.orals[5].date;
   let mhtml = '';
@@ -646,6 +766,8 @@ function render(){
       else if (blocked.has(k)){ cls.push('hol'); titles.push(blocked.get(k)); }
       const mk = marks.get(k);
       if (mk){ const top = rank.find(r => mk.cls.includes(r)); cls.push(top); titles.push(...mk.labels); }
+      const bk = brk.get(k);
+      if (bk){ cls.push('brk'); titles.push(`Break day ${bk.n} of ${bk.total} after written exam ${bk.exam}`); }
       mhtml += `<div class="${cls.join(' ')}" title="${esc(fmt(d)+(titles.length?': '+titles.join('; '):''))}">${day}</div>`;
     }
     mhtml += '</div></div>';
@@ -678,10 +800,31 @@ function render(){
     lines.push(`${fmt(e.d).padEnd(17)}  ${e.title} (${e.who}${e.with?', '+e.with:''})`);
   }
   if (!S.oralK){
-    lines.push(''); lines.push('ORAL EXAM: PROPOSED DATES');
+    lines.push(''); lines.push('ORAL EXAM: POSSIBLE DATES');
     for (const o of R.orals) lines.push(`${fmt(o.date).padEnd(17)}  Examiner reports due ${fmt(o.report)}`);
   }
-  $('#copyText').value = lines.join('\n');
+
+  // email the committee
+  const people = [['Supervisor', S.sup, S.supEmail], ['Examiner 2', S.ex2, S.ex2Email], ['Examiner 3', S.ex3, S.ex3Email]];
+  const toList = people.filter(p => validEmail(p[2])).map(p => p[2]);
+  const missing = people.filter(p => !p[2]).map(p => p[1] || p[0]);
+  const bad = people.filter(p => p[2] && !validEmail(p[2])).map(p => p[1] || p[0]);
+  const candPoss = S.cand ? S.cand+"'s" : "the Candidate's";
+  MAIL.to = toList.join(', ');
+  MAIL.subj = `Comprehensive exam schedule: ${N.cand}` + (oralSel ? `, proposed oral ${fmt(oralSel.date)}` : '');
+  const intro = oralSel
+    ? `Below is the schedule for ${candPoss} comprehensive exam. The proposed oral exam date is ${fmt(oralSel.date)}. Please confirm whether this date works for you. Examiner reports are due to me by ${fmt(oralSel.report)}.`
+    : `Below is the schedule for ${candPoss} comprehensive exam. The oral exam can fall on any of the dates listed at the end. Please tell me which of those dates work for you.`;
+  MAIL.body = ['Dear committee,', '', intro, '', ...lines, '', 'Best regards,', SIGNOFF, 'Chair'].join('\n');
+  $('#mailTo').textContent = MAIL.to || 'No email addresses yet';
+  $('#mailTo').classList.toggle('empty', !MAIL.to);
+  $('#mailSubj').textContent = MAIL.subj;
+  const mnotes = [];
+  if (missing.length) mnotes.push(['', `Add an email address for ${listJoin(missing)} in the Committee settings.`]);
+  if (bad.length) mnotes.push(['warn', `Check the email address for ${listJoin(bad)}. It is not in the form name@example.ca.`]);
+  if (!oralSel) mnotes.push(['', 'No oral date is picked, so the message asks the committee which possible dates work.']);
+  $('#mailNotes').innerHTML = mnotes.map(n => `<div class="note ${n[0]}">${esc(n[1])}</div>`).join('');
+  $('#copyText').value = MAIL.body;
 }
 
 /* ---------- inputs ---------- */
@@ -697,10 +840,23 @@ function fillQuestions(){
   });
 }
 
+function copyText(text, el, label){
+  const st = $('#copyStatus');
+  const fallback = () => {
+    if (el.tagName === 'TEXTAREA'){ el.focus(); el.select(); }
+    else { const r = document.createRange(); r.selectNodeContents(el); const s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+    st.textContent = label+' selected. Press Ctrl+C or Cmd+C to copy.';
+  };
+  if (!text){ st.textContent = 'Nothing to copy yet.'; return; }
+  try { navigator.clipboard.writeText(text).then(() => { st.textContent = label+' copied.'; }, fallback); }
+  catch(e){ fallback(); }
+}
+
 function initInputs(){
   $('#start').value = S.start; $('#anchor').value = S.anchor; $('#gap').value = S.gap;
   $('#chairName').textContent = CHAIR;
   $('#p-cand').value = S.cand; $('#p-sup').value = S.sup; $('#p-ex2').value = S.ex2; $('#p-ex3').value = S.ex3;
+  $('#e-sup').value = S.supEmail; $('#e-ex2').value = S.ex2Email; $('#e-ex3').value = S.ex3Email;
   fillQuestions();
 
   $('#start').addEventListener('change', e => { if (e.target.value){ S.start = e.target.value; S.oralK = null; render(); } });
@@ -708,6 +864,9 @@ function initInputs(){
   $('#gap').addEventListener('change', e => { const v = Math.max(14, Math.min(40, parseInt(e.target.value,10)||14)); e.target.value = v; S.gap = v; render(); });
   [['p-cand','cand'],['p-sup','sup'],['p-ex2','ex2'],['p-ex3','ex3']].forEach(([id,key]) => {
     $('#'+id).addEventListener('input', e => { S[key] = e.target.value.trim(); fillQuestions(); render(); });
+  });
+  [['e-sup','supEmail'],['e-ex2','ex2Email'],['e-ex3','ex3Email']].forEach(([id,key]) => {
+    $('#'+id).addEventListener('input', e => { S[key] = e.target.value.trim(); render(); });
   });
   [0,1,2].forEach(i => {
     $('#q'+(i+1)).addEventListener('change', e => {
@@ -742,13 +901,9 @@ function initInputs(){
     renderBlocks(); render();
   });
 
-  $('#copyBtn').addEventListener('click', () => {
-    const ta = $('#copyText'), st = $('#copyStatus');
-    const fallback = () => { ta.focus(); ta.select(); st.textContent = 'Text selected. Press Ctrl+C or Cmd+C to copy.'; };
-    try {
-      navigator.clipboard.writeText(ta.value).then(() => { st.textContent = 'Copied.'; }, fallback);
-    } catch(e){ fallback(); }
-  });
+  $('#copyTo').addEventListener('click', () => copyText(MAIL.to, $('#mailTo'), 'Addresses'));
+  $('#copySubj').addEventListener('click', () => copyText(MAIL.subj, $('#mailSubj'), 'Subject'));
+  $('#copyBtn').addEventListener('click', () => copyText(MAIL.body, $('#copyText'), 'Message'));
 }
 
 initInputs();
