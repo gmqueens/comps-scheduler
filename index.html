@@ -1,0 +1,759 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Schedules every deadline for an SKHS Science PhD comprehensive exam at Queen's University from one start date, in working days.">
+<title>SKHS Comps Scheduler</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,600;0,8..60,700;1,8..60,600&display=swap">
+<style>
+:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+/* Layout: control column on the left (stacks on phones), results on the right: key dates, question plan, oral proposals, full timeline, month calendars */
+:root{
+  --bg:#F4F6F9; --surface:#FFFFFF; --ink:#172033; --muted:#596377; --line:#D9DEE7; --line-soft:#E9ECF2;
+  --accent:#1D3A6A; --accent-soft:#E2E8F3;
+  --cand:#2B6A85; --cand-soft:#DDEDF3;
+  --exam:#9C6C12; --exam-soft:#F5E9CF;
+  --oral:#2A6B52; --oral-soft:#DCEDE5;
+  --closed:#8A92A1; --closed-soft:#ECEEF2;
+  --warn:#9A4A16; --warn-soft:#F8E6D8;
+  --f-display:"Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-body:"Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#10151F; --surface:#171E2B; --ink:#E6EAF2; --muted:#9AA4B6; --line:#2C3547; --line-soft:#222A39;
+  --accent:#8FB0E6; --accent-soft:#1F2D46;
+  --cand:#7FC1DB; --cand-soft:#16323E;
+  --exam:#E2B45C; --exam-soft:#3A2D12;
+  --oral:#7DCBA9; --oral-soft:#163428;
+  --closed:#7C8597; --closed-soft:#1D2431;
+  --warn:#EFA371; --warn-soft:#3A2414;
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#10151F; --surface:#171E2B; --ink:#E6EAF2; --muted:#9AA4B6; --line:#2C3547; --line-soft:#222A39;
+  --accent:#8FB0E6; --accent-soft:#1F2D46;
+  --cand:#7FC1DB; --cand-soft:#16323E;
+  --exam:#E2B45C; --exam-soft:#3A2D12;
+  --oral:#7DCBA9; --oral-soft:#163428;
+  --closed:#7C8597; --closed-soft:#1D2431;
+  --warn:#EFA371; --warn-soft:#3A2414;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5}
+.wrap{max-width:1240px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+header{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+h1{font-family:var(--f-display);font-weight:700;font-size:clamp(28px,4vw,38px);line-height:1.1;margin:0;text-wrap:balance}
+.lede{color:var(--muted);max-width:68ch;margin:0}
+h2{font-family:var(--f-display);font-weight:600;font-size:21px;margin:0;text-wrap:balance}
+h3{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0;font-weight:600}
+.layout{display:grid;grid-template-columns:340px minmax(0,1fr);gap:24px;align-items:start}
+@media (max-width:880px){.layout{grid-template-columns:minmax(0,1fr)}}
+aside{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px;display:flex;flex-direction:column;gap:22px}
+@media (min-width:881px){aside{position:sticky;top:calc(env(safe-area-inset-top, 0px) + 12px);max-height:calc(100vh - 24px);overflow:auto}}
+fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;min-width:0}
+legend{padding:0;margin-bottom:8px}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);font-weight:500}
+input[type=text],input[type=date],input[type=number],select{font:inherit;font-size:14px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:7px 9px;width:100%;min-width:0}
+input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.hint{font-size:12px;color:var(--muted);margin:0}
+.check{flex-direction:row;align-items:flex-start;gap:8px;color:var(--ink);font-weight:400;font-size:13px}
+.check input{margin-top:3px;accent-color:var(--accent)}
+.checks{display:flex;flex-direction:column;gap:6px}
+.fixed{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:8px 10px;background:var(--accent-soft);border-radius:6px;font-size:13px}
+.fixed .k{color:var(--muted);font-weight:500}
+.fixed .v{font-weight:600;color:var(--accent)}
+.qcard{display:flex;flex-direction:column;gap:8px;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--bg)}
+.qcard .qhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:13px;font-weight:600;color:var(--ink)}
+.qcard .qhead .mono{font-size:12px;color:var(--exam);font-weight:500}
+.qcard input[type=text],.qcard select{background:var(--surface)}
+button{font:inherit;cursor:pointer}
+.btn{background:var(--accent);color:var(--surface);border:0;border-radius:6px;padding:8px 12px;font-size:13px;font-weight:600}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:var(--closed-soft);border-radius:999px;padding:3px 4px 3px 10px;font-size:12px}
+.chip button{border:0;background:transparent;color:var(--muted);width:20px;height:20px;border-radius:50%;line-height:1}
+.chip button:hover{background:var(--line)}
+main{display:flex;flex-direction:column;gap:22px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+/* key dates */
+.keys{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0;border-top:1px solid var(--line-soft)}
+.key{padding:12px 14px 6px 0;display:flex;flex-direction:column;gap:2px;border-bottom:1px solid var(--line-soft)}
+.key .k{font-size:12px;color:var(--muted);font-weight:500}
+.key .v{font-family:var(--f-mono);font-size:15px;font-weight:500}
+.key .a{font-size:12px;color:var(--muted)}
+.key.exam .v{color:var(--exam)}
+.key.oral .v{color:var(--oral)}
+.notes{display:flex;flex-direction:column;gap:6px}
+.note{font-size:13px;padding:8px 12px;border-radius:6px;background:var(--accent-soft);color:var(--ink)}
+.note.warn{background:var(--warn-soft)}
+.note.ok{background:var(--oral-soft)}
+.note b{font-weight:600}
+/* question plan */
+.qplan{display:flex;flex-direction:column;border-top:1px solid var(--line-soft)}
+.qrow{display:grid;grid-template-columns:4.6rem minmax(0,1.5fr) minmax(0,1fr) 7.5rem 7.5rem;grid-template-areas:"n a w r e";gap:8px 16px;padding:12px 0;border-bottom:1px solid var(--line-soft);align-items:start}
+@media (max-width:640px){.qrow{grid-template-columns:4.6rem minmax(0,1fr) minmax(0,1fr);grid-template-areas:"n a a" ". w w" ". r e"}}
+.qrow .qn{grid-area:n}.qrow .qa{grid-area:a;min-width:0}.qrow .qw{grid-area:w;min-width:0}.qrow .qr{grid-area:r}.qrow .qe{grid-area:e}
+.qrow .lbl{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:3px}
+.qrow .val{font-weight:500;display:block}
+.qrow .qnum{font-family:var(--f-display);font-weight:700}
+.qrow .qe .val{color:var(--exam)}
+.qrow small{display:block;color:var(--muted);font-size:13px;margin-top:3px}
+.qrow em{font-style:normal;color:var(--muted);font-weight:400;font-size:13px}
+.num{display:inline-flex;align-items:center;justify-content:center;min-width:1.8em;height:1.65em;padding:0 .35em;margin-right:8px;border-radius:4px;background:var(--accent-soft);color:var(--accent);font-family:var(--f-display);font-style:italic;font-weight:600;font-size:13px;vertical-align:1px}
+.mand{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:600;color:var(--exam);margin-left:8px;white-space:nowrap}
+.unset{color:var(--muted);font-style:italic;font-weight:400}
+/* oral */
+.orals{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.oral-opt{text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:var(--ink);display:flex;flex-direction:column;gap:3px}
+.oral-opt:hover{border-color:var(--oral)}
+.oral-opt .d{font-family:var(--f-mono);font-weight:500;font-size:14px}
+.oral-opt .s{font-size:12px;color:var(--muted)}
+.oral-opt .tag{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--oral);font-weight:600}
+.oral-opt[aria-pressed="true"]{background:var(--oral-soft);border-color:var(--oral);box-shadow:inset 0 0 0 1px var(--oral)}
+/* timeline */
+.tl{display:flex;flex-direction:column}
+.phase{margin-top:14px;padding-bottom:6px;border-bottom:1px solid var(--line);display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.phase:first-child{margin-top:0}
+.phase .sub{font-size:13px;color:var(--muted)}
+.ev{display:grid;grid-template-columns:9.5rem minmax(0,1fr) 11rem;gap:4px 16px;padding:10px 0;border-bottom:1px solid var(--line-soft);align-items:start}
+@media (max-width:640px){.ev{grid-template-columns:7.6rem minmax(0,1fr)}.ev .who{grid-column:2}}
+.ev .date{font-family:var(--f-mono);font-variant-numeric:tabular-nums;font-size:14px;font-weight:500;display:flex;flex-direction:column}
+.ev .date small{font-size:11px;color:var(--muted);font-weight:400}
+.ev .what{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ev .what strong{font-weight:600}
+.ev .what span{font-size:13px;color:var(--muted)}
+.ev .who{font-size:13px;color:var(--muted)}
+.ev .who b{display:block;font-weight:500;color:var(--ink)}
+.pill{display:inline-block;font-size:11px;letter-spacing:.05em;text-transform:uppercase;font-weight:600;padding:1px 7px;border-radius:4px;margin-right:6px;vertical-align:1px}
+.k-committee .pill{background:var(--accent-soft);color:var(--accent)}
+.k-cand .pill{background:var(--cand-soft);color:var(--cand)}
+.k-exam .pill{background:var(--exam-soft);color:var(--exam)}
+.k-oral .pill{background:var(--oral-soft);color:var(--oral)}
+.ev.k-exam .date{color:var(--exam)}
+.ev.k-oral .date{color:var(--oral)}
+/* calendar */
+.legend{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.sw{width:12px;height:12px;border-radius:3px;display:inline-block}
+.months{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px}
+.month h4{margin:0 0 6px;font-size:14px;font-weight:600}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.grid .dow{font-size:10px;color:var(--muted);text-align:center;padding-bottom:2px;font-weight:600}
+.cell{aspect-ratio:1;max-width:100%;font-family:var(--f-mono);font-size:11px;display:flex;align-items:flex-start;justify-content:flex-end;padding:3px 4px;border-radius:4px;position:relative;color:var(--ink);background:transparent}
+.cell.wknd{color:var(--closed)}
+.cell.hol{color:var(--closed);background:repeating-linear-gradient(135deg,var(--closed-soft) 0 3px,transparent 3px 6px)}
+.cell.committee{background:var(--accent-soft);color:var(--accent);font-weight:500}
+.cell.cand{background:var(--cand-soft);color:var(--cand);font-weight:500}
+.cell.exam{background:var(--exam);color:var(--surface);font-weight:500}
+.cell.oralopt{box-shadow:inset 0 0 0 1.5px var(--oral);color:var(--oral);font-weight:500}
+.cell.oral{background:var(--oral);color:var(--surface);font-weight:500}
+.cell.blank{visibility:hidden}
+/* holidays + copy */
+.hols{display:flex;flex-direction:column;gap:0}
+.hol-row{display:grid;grid-template-columns:9.5rem minmax(0,1fr);gap:12px;font-size:13px;padding:6px 0;border-bottom:1px solid var(--line-soft)}
+.hol-row .mono{font-size:13px}
+textarea{width:100%;min-height:240px;font-family:var(--f-mono);font-size:12px;line-height:1.55;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;resize:vertical}
+.copy-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.status{font-size:13px;color:var(--oral)}
+@media (prefers-reduced-motion:no-preference){.oral-opt{transition:border-color .15s, background .15s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">SKHS · Science PhD comprehensive exam</div>
+    <h1>Comps Scheduler</h1>
+    <p class="lede">Enter a start date and the three questions. The schedule follows the SKHS Forms and Procedures (version of 2 Nov 2026). Working days exclude weekends, Ontario statutory holidays, the Queen's winter closure and any dates you block.</p>
+  </header>
+
+  <div class="layout">
+    <aside aria-label="Exam settings">
+      <fieldset>
+        <legend><h3>Start</h3></legend>
+        <label for="start">Start date
+          <input type="date" id="start">
+        </label>
+        <label for="anchor">The start date is the
+          <select id="anchor">
+            <option value="meeting">Initial organizing meeting</option>
+            <option value="pkg">Exam packages due to Chair</option>
+            <option value="rl1">First reading list to Candidate</option>
+          </select>
+        </label>
+        <label for="gap">Working days between written exams
+          <input type="number" id="gap" min="14" max="40" step="1" value="14">
+        </label>
+        <p class="hint">Minimum is 14. At 14, each new reading list goes out 4 working days after the previous exam.</p>
+      </fieldset>
+
+      <fieldset>
+        <legend><h3>Committee</h3></legend>
+        <div class="fixed"><span class="k">Chair</span><span class="v" id="chairName">Dr. Gerome Manson</span></div>
+        <label for="p-cand">Candidate<input type="text" id="p-cand" placeholder="Candidate name"></label>
+        <label for="p-sup">Supervisor (Examiner 1)<input type="text" id="p-sup" placeholder="Supervisor name"></label>
+        <div class="row2">
+          <label for="p-ex2">Examiner 2<input type="text" id="p-ex2" placeholder="Name"></label>
+          <label for="p-ex3">Examiner 3<input type="text" id="p-ex3" placeholder="Name"></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend><h3>Questions</h3></legend>
+        <p class="hint">Three distinct questions. General background is mandatory. Two questions may share an area if their content differs. Picking a different writer swaps the two exam slots, topic area included.</p>
+        <div class="qcard">
+          <div class="qhead"><span>Written exam 1</span><span class="mono" id="qd1"></span></div>
+          <label for="q1">Written by<select id="q1"></select></label>
+          <label for="a1">Topic area<select id="a1"></select></label>
+          <label for="f1">Focus (optional)<input type="text" id="f1" placeholder="e.g. Sensorimotor integration"></label>
+        </div>
+        <div class="qcard">
+          <div class="qhead"><span>Written exam 2</span><span class="mono" id="qd2"></span></div>
+          <label for="q2">Written by<select id="q2"></select></label>
+          <label for="a2">Topic area<select id="a2"></select></label>
+          <label for="f2">Focus (optional)<input type="text" id="f2" placeholder="e.g. Markerless motion capture validation"></label>
+        </div>
+        <div class="qcard">
+          <div class="qhead"><span>Written exam 3</span><span class="mono" id="qd3"></span></div>
+          <label for="q3">Written by<select id="q3"></select></label>
+          <label for="a3">Topic area<select id="a3"></select></label>
+          <label for="f3">Focus (optional)<input type="text" id="f3" placeholder="e.g. Internal models in motor learning"></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend><h3>Non-working days</h3></legend>
+        <div class="checks" id="holChecks"></div>
+        <p class="hint">Block extra dates such as committee travel, conferences or reading week.</p>
+        <div class="row2">
+          <label for="blk-from">From<input type="date" id="blk-from"></label>
+          <label for="blk-to">To (optional)<input type="date" id="blk-to"></label>
+        </div>
+        <label for="blk-label">Reason<input type="text" id="blk-label" placeholder="Examiner away"></label>
+        <div><button class="btn ghost" id="blk-add" type="button">Block these dates</button></div>
+        <div class="chips" id="blkList"></div>
+      </fieldset>
+    </aside>
+
+    <main>
+      <section class="panel" aria-labelledby="h-keys">
+        <div class="panel-head">
+          <h2 id="h-keys">Key dates</h2>
+          <span class="hint" id="spanInfo"></span>
+        </div>
+        <div class="keys" id="keys"></div>
+        <div class="notes" id="notes"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-q">
+        <div class="panel-head">
+          <h2 id="h-q">Exam questions</h2>
+          <span class="hint">Areas i to v from the procedures. Recorded on the Planning Form (Appendix C).</span>
+        </div>
+        <div class="qplan" id="qplan"></div>
+        <div class="notes" id="qnotes"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-oral">
+        <div class="panel-head">
+          <h2 id="h-oral">Proposed oral exam dates</h2>
+          <span class="hint">5 to 10 working days after written exam 3. Select one to lock it in.</span>
+        </div>
+        <div class="orals" id="orals"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-tl">
+        <div class="panel-head">
+          <h2 id="h-tl">Full schedule</h2>
+          <span class="hint">Day numbers count working days from the organizing meeting.</span>
+        </div>
+        <div class="tl" id="timeline"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-cal">
+        <div class="panel-head"><h2 id="h-cal">Calendar</h2></div>
+        <div class="legend">
+          <span><i class="sw" style="background:var(--accent-soft)"></i>Committee deadline</span>
+          <span><i class="sw" style="background:var(--cand-soft)"></i>Candidate step</span>
+          <span><i class="sw" style="background:var(--exam)"></i>Written exam</span>
+          <span><i class="sw" style="box-shadow:inset 0 0 0 1.5px var(--oral)"></i>Oral option</span>
+          <span><i class="sw" style="background:var(--oral)"></i>Oral (selected)</span>
+          <span><i class="sw" style="background:repeating-linear-gradient(135deg,var(--closed-soft) 0 3px,transparent 3px 6px);border:1px solid var(--line)"></i>Holiday or blocked</span>
+        </div>
+        <div class="months" id="months"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-hol">
+        <div class="panel-head"><h2 id="h-hol">Non-working weekdays in this window</h2></div>
+        <div class="hols" id="hols"></div>
+      </section>
+
+      <section class="panel" aria-labelledby="h-copy">
+        <div class="panel-head"><h2 id="h-copy">Schedule text for email</h2></div>
+        <textarea id="copyText" readonly aria-label="Schedule as plain text"></textarea>
+        <div class="copy-row">
+          <button class="btn" id="copyBtn" type="button">Copy schedule</button>
+          <span class="status" id="copyStatus" role="status"></span>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+
+<script>
+(function(){
+const $ = s => document.querySelector(s);
+const pad = n => String(n).padStart(2,'0');
+const iso = d => d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const parseISO = s => { const [y,m,d] = s.split('-').map(Number); return new Date(y, m-1, d); };
+const addDays = (d,n) => new Date(d.getFullYear(), d.getMonth(), d.getDate()+n);
+const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const fmt = d => DOW[d.getDay()]+' '+d.getDate()+' '+MON[d.getMonth()]+' '+d.getFullYear();
+const fmtShort = d => DOW[d.getDay()]+' '+d.getDate()+' '+MON[d.getMonth()];
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const listJoin = a => a.length < 2 ? a.join('') : a.slice(0,-1).join(', ')+' and '+a[a.length-1];
+
+const CHAIR = 'Dr. Gerome Manson';
+const AREAS = [
+  {id:'gen', num:'i', label:'General background'},
+  {id:'dev', num:'ii', label:'Current developments'},
+  {id:'con', num:'iii', label:'Current controversies'},
+  {id:'meth', num:'iv', label:'Methodological issues'},
+  {id:'theory', num:'v', label:'Theoretical issues'}
+];
+const areaById = id => AREAS.find(a => a.id === id) || null;
+const areaLabel = i => { const a = areaById(S.areas[i]); return a ? a.label : ''; };
+
+/* ---------- holidays ---------- */
+const HOLIDAY_TYPES = [
+  {id:'newyear', name:"New Year's Day"},
+  {id:'family', name:'Family Day'},
+  {id:'goodfri', name:'Good Friday'},
+  {id:'victoria', name:'Victoria Day'},
+  {id:'canada', name:'Canada Day'},
+  {id:'civic', name:'Civic Holiday'},
+  {id:'labour', name:'Labour Day'},
+  {id:'ndtr', name:'National Day for Truth and Reconciliation'},
+  {id:'thanks', name:'Thanksgiving'},
+  {id:'xmas', name:'Christmas Day and Boxing Day'},
+  {id:'closure', name:"Queen's winter closure (Dec 24 to Jan 1)"}
+];
+function nthWeekday(y,m,wd,n){ const f = new Date(y,m,1); const off = (wd - f.getDay() + 7) % 7; return new Date(y,m,1+off+7*(n-1)); }
+function easter(y){
+  const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),
+  h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),
+  mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1;
+  return new Date(y,mo-1,da);
+}
+const observed = d => d.getDay()===6 ? addDays(d,2) : d.getDay()===0 ? addDays(d,1) : d;
+function holidaysFor(y){
+  const L = [];
+  L.push({id:'newyear', name:"New Year's Day", date:observed(new Date(y,0,1))});
+  L.push({id:'family', name:'Family Day', date:nthWeekday(y,1,1,3)});
+  L.push({id:'goodfri', name:'Good Friday', date:addDays(easter(y),-2)});
+  let v = new Date(y,4,24); while (v.getDay()!==1) v = addDays(v,-1);
+  L.push({id:'victoria', name:'Victoria Day', date:v});
+  L.push({id:'canada', name:'Canada Day', date:observed(new Date(y,6,1))});
+  L.push({id:'civic', name:'Civic Holiday', date:nthWeekday(y,7,1,1)});
+  L.push({id:'labour', name:'Labour Day', date:nthWeekday(y,8,1,1)});
+  L.push({id:'ndtr', name:'National Day for Truth and Reconciliation', date:observed(new Date(y,8,30))});
+  L.push({id:'thanks', name:'Thanksgiving', date:nthWeekday(y,9,1,2)});
+  const w = new Date(y,11,25).getDay();
+  let c = new Date(y,11,25), b = new Date(y,11,26);
+  if (w===6){ c = new Date(y,11,27); b = new Date(y,11,28); }
+  else if (w===0){ c = new Date(y,11,27); }
+  else if (w===5){ b = new Date(y,11,28); }
+  L.push({id:'xmas', name:'Christmas Day', date:c});
+  L.push({id:'xmas', name:'Boxing Day', date:b});
+  for (let d = new Date(y,11,24); d <= new Date(y+1,0,1); d = addDays(d,1)){
+    L.push({id:'closure', name:"Queen's winter closure", date:d});
+  }
+  return L;
+}
+
+/* ---------- state ---------- */
+function nextMonday(){ let d = new Date(); d = new Date(d.getFullYear(), d.getMonth(), d.getDate()+1); while (d.getDay()!==1) d = addDays(d,1); return iso(d); }
+const DEFAULTS = {
+  start: nextMonday(), anchor:'meeting', gap:14,
+  cand:'', sup:'', ex2:'', ex3:'',
+  order:['sup','ex2','ex3'], areas:['gen','',''], focus:['','',''],
+  off:{}, blocks:[], oralK:null
+};
+const fresh = () => JSON.parse(JSON.stringify(DEFAULTS));
+let S = fresh();
+try {
+  let saved = JSON.parse(localStorage.getItem('skhs-comps-v2') || 'null');
+  if (!saved){
+    const old = JSON.parse(localStorage.getItem('skhs-comps-v1') || 'null');
+    if (old){
+      if (old.sup === CHAIR){ old.sup = ''; if (old.cand === 'Tasha Ignatius') old.cand = ''; }
+      saved = old;
+    }
+  }
+  if (saved && typeof saved === 'object') S = Object.assign(fresh(), saved);
+} catch(e){ S = fresh(); }
+delete S.chair;
+['order','areas','focus'].forEach(k => { if (!Array.isArray(S[k]) || S[k].length !== 3) S[k] = fresh()[k]; });
+if (S.order.slice().sort().join() !== 'ex2,ex3,sup') S.order = ['sup','ex2','ex3'];
+S.areas = S.areas.map(a => areaById(a) ? a : '');
+S.focus = S.focus.map(f => typeof f === 'string' ? f : '');
+if (!/^\d{4}-\d{2}-\d{2}$/.test(S.start || '')) S.start = DEFAULTS.start;
+if (!S.off || typeof S.off !== 'object') S.off = {};
+if (!Array.isArray(S.blocks)) S.blocks = [];
+const save = () => { try { localStorage.setItem('skhs-comps-v2', JSON.stringify(S)); } catch(e){} };
+
+/* ---------- working day engine ---------- */
+let blocked = new Map();
+function buildBlocked(y0, y1){
+  blocked = new Map();
+  for (let y = y0; y <= y1; y++){
+    for (const h of holidaysFor(y)){
+      if (S.off[h.id]) continue;
+      const k = iso(h.date);
+      if (!blocked.has(k)) blocked.set(k, h.name);
+    }
+  }
+  for (const b of S.blocks){
+    let d = parseISO(b.from); const end = parseISO(b.to || b.from);
+    for (; d <= end; d = addDays(d,1)){ const k = iso(d); if (!blocked.has(k)) blocked.set(k, b.label || 'Blocked'); }
+  }
+}
+const isWorking = d => d.getDay()!==0 && d.getDay()!==6 && !blocked.has(iso(d));
+function nextWorking(d){ while (!isWorking(d)) d = addDays(d,1); return d; }
+function addWD(d, n){
+  const step = n < 0 ? -1 : 1; let x = d, c = 0;
+  while (c < Math.abs(n)){ x = addDays(x, step); if (isWorking(x)) c++; }
+  return x;
+}
+function wdFrom(a, b){
+  if (iso(a)===iso(b)) return 0;
+  let n = 0, x = a;
+  if (b > a){ while (x < b){ x = addDays(x,1); if (isWorking(x)) n++; } return n; }
+  while (x > b){ x = addDays(x,-1); if (isWorking(x)) n--; } return n;
+}
+
+/* ---------- compute ---------- */
+function names(){
+  return {
+    cand: S.cand || 'Candidate',
+    sup: S.sup || 'Supervisor',
+    ex2: S.ex2 || 'Examiner 2',
+    ex3: S.ex3 || 'Examiner 3',
+    chair: CHAIR
+  };
+}
+const writerOption = id => id==='sup' ? (S.sup ? S.sup+' (Supervisor)' : 'Supervisor') : names()[id];
+
+function compute(){
+  const raw = parseISO(S.start);
+  buildBlocked(raw.getFullYear()-1, raw.getFullYear()+2);
+  const start = nextWorking(raw);
+  const moved = iso(start) !== iso(raw);
+  let meeting, pkg, rl1;
+  if (S.anchor==='meeting'){ meeting = start; pkg = addWD(meeting,15); }
+  else if (S.anchor==='pkg'){ pkg = start; meeting = addWD(pkg,-15); }
+  else { rl1 = start; pkg = addWD(rl1,-10); meeting = addWD(pkg,-15); }
+  const finalPkg = addWD(pkg,5);
+  rl1 = addWD(pkg,10);
+  const gap = Math.max(14, Number(S.gap)||14);
+  const exams = [addWD(rl1,10)];
+  exams.push(addWD(exams[0],gap)); exams.push(addWD(exams[1],gap));
+  const per = exams.map(e => ({ exam:e, rl:addWD(e,-10), mem:addWD(e,-3), resp:addWD(e,3) }));
+  const orals = [];
+  for (let k = 5; k <= 10; k++){ const o = addWD(exams[2],k); orals.push({k, date:o, report:addWD(o,-2)}); }
+  return {raw, start, moved, meeting, pkg, finalPkg, rl1, exams, per, orals, gap};
+}
+
+function areaChecks(){
+  const out = [];
+  const missing = [0,1,2].filter(i => !S.areas[i]).map(i => i+1);
+  const hasGen = S.areas.includes('gen');
+  if (missing.length){
+    out.push(['', `Choose a topic area for question${missing.length>1?'s':''} ${listJoin(missing)}.${hasGen ? '' : ' One question must be General background.'}`]);
+  } else if (!hasGen){
+    out.push(['warn', '<b>General background is mandatory.</b> Assign it to one of the three questions.']);
+  }
+  const groups = {};
+  S.areas.forEach((a,i) => { if (a) (groups[a] = groups[a] || []).push(i); });
+  let shared = false;
+  for (const [a, idx] of Object.entries(groups)){
+    if (idx.length < 2) continue;
+    shared = true;
+    const foci = idx.map(i => S.focus[i].trim().toLowerCase());
+    const allSet = foci.every(Boolean);
+    const same = allSet && new Set(foci).size < foci.length;
+    const msg = `Questions ${listJoin(idx.map(i => i+1))} are ${idx.length===2?'both':'all'} ${areaById(a).label}. This is allowed when the content of each question is distinct.`;
+    if (same) out.push(['warn', msg+' Their focus lines are identical. Make the content distinct.']);
+    else if (!allSet) out.push(['', msg+' Add a focus line to each so the difference is on record.']);
+    else out.push(['', msg]);
+  }
+  if (!missing.length && hasGen && !shared) out.push(['ok', 'Three distinct topic areas, including the mandatory General background.']);
+  return out;
+}
+
+function buildEvents(R){
+  const N = names();
+  const E = [];
+  const planned = S.areas.every(Boolean) ? ' Planned areas: '+S.areas.map(a => areaById(a).label).join('; ')+'.' : '';
+  E.push({d:R.meeting, phase:'Setup', kind:'committee', tag:'Meeting', title:'Initial organizing meeting',
+    detail:'Choose 3 topic areas and complete the Planning Form (Appendix C).'+planned+' Accommodations are arranged before this meeting.',
+    who:N.sup+' convenes', with:'Full committee and Candidate'});
+  E.push({d:R.pkg, phase:'Setup', kind:'committee', tag:'Due', title:'Exam packages to Chair',
+    detail:'Context statement, reading list (about 15 to 20 articles) and a question answerable in 4 hours with expected output stated.',
+    who:'All 3 Examiners', with:'to '+N.chair});
+  E.push({d:R.finalPkg, phase:'Setup', kind:'committee', tag:'Due', title:'Final revised packages to Chair',
+    detail:'Chair checks packages and avoids overlap between questions.', who:'All 3 Examiners', with:'to '+N.chair});
+  R.per.forEach((p,i) => {
+    const q = N[S.order[i]];
+    const area = areaLabel(i);
+    const qline = area ? area+' question from '+q : 'Question from '+q+', topic area not chosen';
+    const focus = S.focus[i] ? ' Focus: '+S.focus[i]+'.' : '';
+    const ph = 'Written exam '+(i+1);
+    E.push({d:p.rl, phase:ph, kind:'cand', tag:'Release', area, title:'Reading list and context statement '+(i+1)+' to Candidate',
+      detail:qline+'.'+focus+(i>0 && R.gap===14 ? ' Released 4 working days after written exam '+i+'.' : ''),
+      who:'Grad Coordinator', with:'to '+N.cand});
+    E.push({d:p.mem, phase:ph, kind:'cand', tag:'Due', title:'Memory aid sheet for approval',
+      detail:'One page, maximum 500 words.', who:N.cand, with:'to '+q});
+    E.push({d:p.exam, phase:ph, kind:'exam', tag:'Exam', area, title:'Written exam '+(i+1),
+      detail:'4 hours, in person, offline SKHS computer. Citations as (First Author, Year).', who:N.cand, with:qline});
+    E.push({d:p.resp, phase:ph, kind:'cand', tag:'By', title:'Response '+(i+1)+' circulated',
+      detail:'To the Candidate and all 3 Examiners, within 3 working days.', who:'Grad Coordinator', with:''});
+  });
+  if (S.oralK){
+    const o = R.orals.find(x => x.k===S.oralK);
+    E.push({d:o.report, phase:'Oral exam', kind:'committee', tag:'Due', title:'Examiner reports to Chair',
+      detail:'Satisfactory or unsatisfactory, by email, for all 3 written responses.', who:'Each Examiner', with:'to '+N.chair});
+    E.push({d:o.date, phase:'Oral exam', kind:'oral', tag:'Oral', title:'Oral exam',
+      detail:'Committee meets first without the Candidate. Two rounds of about 20 to 25 minutes per Examiner. Usually under 3 hours. Outcome Form (Appendix D) to the Grad Coordinator after.',
+      who:N.chair+' chairs', with:N.cand+' and all 3 Examiners'});
+  }
+  E.sort((a,b) => a.d - b.d);
+  return E;
+}
+
+/* ---------- render ---------- */
+function render(){
+  save();
+  const R = compute();
+  const N = names();
+  const E = buildEvents(R);
+  const oralSel = S.oralK ? R.orals.find(x => x.k===S.oralK) : null;
+
+  // sidebar exam dates
+  R.exams.forEach((d,i) => { $('#qd'+(i+1)).textContent = fmtShort(d); });
+
+  // key dates
+  const keys = [
+    ['Organizing meeting', fmt(R.meeting), '', ''],
+    ['Packages to Chair', fmt(R.pkg), '', ''],
+    ['First reading list', fmt(R.rl1), '', ''],
+    ['Written exam 1', fmt(R.exams[0]), 'exam', areaLabel(0) || 'Area not chosen'],
+    ['Written exam 2', fmt(R.exams[1]), 'exam', areaLabel(1) || 'Area not chosen'],
+    ['Written exam 3', fmt(R.exams[2]), 'exam', areaLabel(2) || 'Area not chosen'],
+    [oralSel ? 'Oral exam' : 'Oral window', oralSel ? fmt(oralSel.date) : fmtShort(R.orals[0].date)+' to '+fmtShort(R.orals[5].date), 'oral', '']
+  ];
+  $('#keys').innerHTML = keys.map(k => `<div class="key ${k[2]}"><span class="k">${k[0]}</span><span class="v">${k[1]}</span>${k[3] ? `<span class="a">${esc(k[3])}</span>` : ''}</div>`).join('');
+
+  const endRef = oralSel ? oralSel.date : R.orals[0].date;
+  const wdTotal = wdFrom(R.pkg, endRef);
+  const weeks = Math.round((endRef - R.meeting)/(7*864e5)*10)/10;
+  $('#spanInfo').textContent = `${wdFrom(R.meeting,endRef)} working days from meeting to ${oralSel?'oral':'earliest oral'} (${weeks} weeks)`;
+
+  const notes = [];
+  if (R.moved) notes.push(['warn', `<b>${fmt(R.raw)}</b> is not a working day. The schedule starts on <b>${fmt(R.start)}</b>.`]);
+  notes.push(['', `Packages to Chair through ${oralSel?'the oral':'the earliest oral'} spans <b>${wdTotal} working days</b>. The procedures estimate 50 to 55 working days for the whole process.`]);
+  const winBlocked = [...blocked.keys()].filter(k => { const d = parseISO(k); return d >= R.meeting && d <= R.orals[5].date && d.getDay()%6!==0; });
+  if (winBlocked.length) notes.push(['', `${winBlocked.length} weekday${winBlocked.length>1?'s':''} in this window ${winBlocked.length>1?'are':'is'} non-working, which pushes later dates back.`]);
+  if (!S.oralK) notes.push(['', 'Select an oral date below to add the oral and the examiner report deadline to the schedule.']);
+  $('#notes').innerHTML = notes.map(n => `<div class="note ${n[0]}">${n[1]}</div>`).join('');
+
+  // question plan
+  $('#qplan').innerHTML = R.per.map((p,i) => {
+    const a = areaById(S.areas[i]);
+    const area = a
+      ? `<span class="num">${a.num}</span>${esc(a.label)}${a.id==='gen' ? '<span class="mand">Mandatory</span>' : ''}`
+      : '<span class="unset">Topic area not chosen</span>';
+    const writer = esc(N[S.order[i]]) + (S.order[i]==='sup' && S.sup ? ' <em>Supervisor</em>' : '');
+    return `<div class="qrow">
+      <div class="qn"><span class="lbl">Question</span><span class="val qnum">${i+1}</span></div>
+      <div class="qa"><span class="lbl">Topic area</span><span class="val">${area}</span>${S.focus[i] ? `<small>${esc(S.focus[i])}</small>` : ''}</div>
+      <div class="qw"><span class="lbl">Written by</span><span class="val">${writer}</span></div>
+      <div class="qr"><span class="lbl">Reading list</span><span class="val mono">${fmtShort(p.rl)}</span></div>
+      <div class="qe"><span class="lbl">Exam</span><span class="val mono">${fmtShort(p.exam)}</span></div>
+    </div>`;
+  }).join('');
+  $('#qnotes').innerHTML = areaChecks().map(n => `<div class="note ${n[0]}">${n[1]}</div>`).join('');
+
+  // orals
+  $('#orals').innerHTML = R.orals.map(o => `
+    <button type="button" class="oral-opt" data-k="${o.k}" aria-pressed="${S.oralK===o.k}">
+      <span class="tag">+${o.k} working days${o.k===5?' · earliest':o.k===10?' · latest':''}</span>
+      <span class="d">${fmt(o.date)}</span>
+      <span class="s">Reports due ${fmtShort(o.report)}</span>
+    </button>`).join('');
+  document.querySelectorAll('.oral-opt').forEach(b => b.addEventListener('click', () => {
+    const k = Number(b.dataset.k); S.oralK = S.oralK===k ? null : k; render();
+  }));
+
+  // timeline
+  const phaseSub = { 'Setup':'Committee prepares exam packages', 'Oral exam':'Chaired by '+N.chair };
+  [0,1,2].forEach(i => {
+    phaseSub['Written exam '+(i+1)] = (areaLabel(i) || 'Topic area not chosen')+' · '+N[S.order[i]]+(S.focus[i] ? ' · '+S.focus[i] : '');
+  });
+  let html = '', lastPhase = '';
+  for (const e of E){
+    if (e.phase !== lastPhase){ html += `<div class="phase"><h3>${e.phase}</h3><span class="sub">${esc(phaseSub[e.phase]||'')}</span></div>`; lastPhase = e.phase; }
+    html += `<div class="ev k-${e.kind}">
+      <div class="date">${fmtShort(e.d)}<small>${e.d.getFullYear()} · Day ${wdFrom(R.meeting,e.d)}</small></div>
+      <div class="what"><strong><span class="pill">${e.tag}</span>${esc(e.title)}</strong><span>${esc(e.detail)}</span></div>
+      <div class="who"><b>${esc(e.who)}</b>${esc(e.with)}</div>
+    </div>`;
+  }
+  if (!S.oralK){
+    html += `<div class="phase"><h3>Oral exam</h3><span class="sub">Window ${fmtShort(R.orals[0].date)} to ${fmtShort(R.orals[5].date)}. Choose a date above.</span></div>`;
+  }
+  $('#timeline').innerHTML = html;
+
+  // calendar
+  const marks = new Map();
+  const mark = (d, cls, label) => { const k = iso(d); if (!marks.has(k)) marks.set(k, {cls:[], labels:[]}); const m = marks.get(k); m.cls.push(cls); m.labels.push(label); };
+  for (const e of E) mark(e.d, e.kind, e.title+(e.area ? ' ('+e.area+')' : ''));
+  for (const o of R.orals) if (S.oralK!==o.k) mark(o.date, 'oralopt', 'Oral option (+'+o.k+')');
+  const rank = ['oral','exam','oralopt','committee','cand'];
+  const first = new Date(R.meeting.getFullYear(), R.meeting.getMonth(), 1);
+  const lastD = R.orals[5].date;
+  let mhtml = '';
+  for (let m = new Date(first); m <= lastD; m = new Date(m.getFullYear(), m.getMonth()+1, 1)){
+    mhtml += `<div class="month"><h4>${MONL[m.getMonth()]} ${m.getFullYear()}</h4><div class="grid">`;
+    mhtml += ['M','T','W','T','F','S','S'].map(x => `<div class="dow">${x}</div>`).join('');
+    const lead = (m.getDay()+6)%7;
+    for (let i = 0; i < lead; i++) mhtml += '<div class="cell blank"></div>';
+    const dim = new Date(m.getFullYear(), m.getMonth()+1, 0).getDate();
+    for (let day = 1; day <= dim; day++){
+      const d = new Date(m.getFullYear(), m.getMonth(), day), k = iso(d);
+      const cls = ['cell']; const titles = [];
+      if (d.getDay()===0 || d.getDay()===6) cls.push('wknd');
+      else if (blocked.has(k)){ cls.push('hol'); titles.push(blocked.get(k)); }
+      const mk = marks.get(k);
+      if (mk){ const top = rank.find(r => mk.cls.includes(r)); cls.push(top); titles.push(...mk.labels); }
+      mhtml += `<div class="${cls.join(' ')}" title="${esc(fmt(d)+(titles.length?': '+titles.join('; '):''))}">${day}</div>`;
+    }
+    mhtml += '</div></div>';
+  }
+  $('#months').innerHTML = mhtml;
+
+  // holidays in window
+  const hl = winBlocked.sort().map(k => `<div class="hol-row"><span class="mono">${fmt(parseISO(k))}</span><span>${esc(blocked.get(k))}</span></div>`);
+  $('#hols').innerHTML = hl.length ? hl.join('') : '<p class="hint">None. Only weekends are excluded in this window.</p>';
+
+  // copy text
+  const lines = [];
+  lines.push(`Comprehensive exam schedule: ${N.cand}`);
+  lines.push(`Chair: ${N.chair}. Supervisor: ${N.sup}. Examiners: ${N.ex2}, ${N.ex3}.`);
+  lines.push('');
+  lines.push('QUESTIONS');
+  [0,1,2].forEach(i => {
+    const a = areaById(S.areas[i]);
+    lines.push(`${i+1}. ${a ? a.label+' ('+a.num+')' : 'Topic area not chosen'}, from ${N[S.order[i]]}${S.focus[i] ? '. Focus: '+S.focus[i] : ''}`);
+  });
+  lines.push('');
+  let lp = '';
+  for (const e of E){
+    if (e.phase !== lp){
+      if (lp) lines.push('');
+      let head = e.phase.toUpperCase();
+      if (e.phase.indexOf('Written exam ') === 0){ const i = Number(e.phase.slice(-1)) - 1; head += ' ('+(areaLabel(i) || 'topic area not chosen')+')'; }
+      lines.push(head); lp = e.phase;
+    }
+    lines.push(`${fmt(e.d).padEnd(17)}  ${e.title} (${e.who}${e.with?', '+e.with:''})`);
+  }
+  if (!S.oralK){
+    lines.push(''); lines.push('ORAL EXAM: PROPOSED DATES');
+    for (const o of R.orals) lines.push(`${fmt(o.date).padEnd(17)}  Examiner reports due ${fmt(o.report)}`);
+  }
+  $('#copyText').value = lines.join('\n');
+}
+
+/* ---------- inputs ---------- */
+function fillQuestions(){
+  const wopts = ['sup','ex2','ex3'].map(id => `<option value="${id}">${esc(writerOption(id))}</option>`).join('');
+  const aopts = '<option value="">Choose an area</option>' + AREAS.map(a => `<option value="${a.id}">${a.num}) ${a.label}${a.id==='gen' ? ' (mandatory)' : ''}</option>`).join('');
+  [0,1,2].forEach(i => {
+    const w = $('#q'+(i+1)), a = $('#a'+(i+1)), f = $('#f'+(i+1));
+    w.innerHTML = wopts; w.value = S.order[i];
+    if (!a.options.length) a.innerHTML = aopts;
+    a.value = S.areas[i];
+    if (document.activeElement !== f) f.value = S.focus[i];
+  });
+}
+
+function initInputs(){
+  $('#start').value = S.start; $('#anchor').value = S.anchor; $('#gap').value = S.gap;
+  $('#chairName').textContent = CHAIR;
+  $('#p-cand').value = S.cand; $('#p-sup').value = S.sup; $('#p-ex2').value = S.ex2; $('#p-ex3').value = S.ex3;
+  fillQuestions();
+
+  $('#start').addEventListener('change', e => { if (e.target.value){ S.start = e.target.value; S.oralK = null; render(); } });
+  $('#anchor').addEventListener('change', e => { S.anchor = e.target.value; render(); });
+  $('#gap').addEventListener('change', e => { const v = Math.max(14, Math.min(40, parseInt(e.target.value,10)||14)); e.target.value = v; S.gap = v; render(); });
+  [['p-cand','cand'],['p-sup','sup'],['p-ex2','ex2'],['p-ex3','ex3']].forEach(([id,key]) => {
+    $('#'+id).addEventListener('input', e => { S[key] = e.target.value.trim(); fillQuestions(); render(); });
+  });
+  [0,1,2].forEach(i => {
+    $('#q'+(i+1)).addEventListener('change', e => {
+      const v = e.target.value, j = S.order.indexOf(v);
+      if (j !== -1 && j !== i){
+        [S.order[i], S.order[j]] = [S.order[j], S.order[i]];
+        [S.areas[i], S.areas[j]] = [S.areas[j], S.areas[i]];
+        [S.focus[i], S.focus[j]] = [S.focus[j], S.focus[i]];
+      }
+      fillQuestions(); render();
+    });
+    $('#a'+(i+1)).addEventListener('change', e => { S.areas[i] = e.target.value; render(); });
+    $('#f'+(i+1)).addEventListener('input', e => { S.focus[i] = e.target.value.trim(); render(); });
+  });
+
+  $('#holChecks').innerHTML = HOLIDAY_TYPES.map(h => `<label class="check" for="hol-${h.id}"><input type="checkbox" id="hol-${h.id}" data-id="${h.id}" ${S.off[h.id]?'':'checked'}>${esc(h.name)}</label>`).join('');
+  document.querySelectorAll('#holChecks input').forEach(c => c.addEventListener('change', e => { S.off[e.target.dataset.id] = !e.target.checked; render(); }));
+
+  const renderBlocks = () => {
+    $('#blkList').innerHTML = S.blocks.map((b,i) => {
+      const range = b.to && b.to !== b.from ? fmtShort(parseISO(b.from))+' to '+fmtShort(parseISO(b.to)) : fmtShort(parseISO(b.from));
+      return `<span class="chip">${esc(range)}${b.label?' · '+esc(b.label):''}<button type="button" data-i="${i}" aria-label="Remove ${esc(range)}">×</button></span>`;
+    }).join('');
+    document.querySelectorAll('#blkList button').forEach(btn => btn.addEventListener('click', () => { S.blocks.splice(Number(btn.dataset.i),1); renderBlocks(); render(); }));
+  };
+  renderBlocks();
+  $('#blk-add').addEventListener('click', () => {
+    const from = $('#blk-from').value; if (!from) { $('#blk-from').focus(); return; }
+    let to = $('#blk-to').value || from; if (to < from) to = from;
+    S.blocks.push({from, to, label:$('#blk-label').value.trim()});
+    $('#blk-from').value = ''; $('#blk-to').value = ''; $('#blk-label').value = '';
+    renderBlocks(); render();
+  });
+
+  $('#copyBtn').addEventListener('click', () => {
+    const ta = $('#copyText'), st = $('#copyStatus');
+    const fallback = () => { ta.focus(); ta.select(); st.textContent = 'Text selected. Press Ctrl+C or Cmd+C to copy.'; };
+    try {
+      navigator.clipboard.writeText(ta.value).then(() => { st.textContent = 'Copied.'; }, fallback);
+    } catch(e){ fallback(); }
+  });
+}
+
+initInputs();
+render();
+})();
+</script>
+</body>
+</html>
