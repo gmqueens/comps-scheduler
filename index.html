@@ -241,7 +241,11 @@ textarea{width:100%;min-height:240px;font-family:var(--f-mono);font-size:12px;li
 
       <fieldset>
         <legend><h3>Committee</h3></legend>
-        <div class="fixed"><span class="k">Chair</span><span class="v" id="chairName">Dr. Gerome Manson</span></div>
+        <div class="person">
+          <div class="person-h">Chair</div>
+          <label for="p-chair">Name<input type="text" id="p-chair" placeholder="Chair name"></label>
+          <label for="e-chair">Email<input type="email" id="e-chair" placeholder="name@queensu.ca" autocomplete="off"></label>
+        </div>
         <label for="p-cand">Candidate<input type="text" id="p-cand" placeholder="Candidate name"></label>
         <div class="person">
           <div class="person-h">Examiner 1 · Supervisor</div>
@@ -396,8 +400,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':
 const listJoin = a => a.length < 2 ? a.join('') : a.slice(0,-1).join(', ')+' and '+a[a.length-1];
 const validEmail = s => /^[^\s@,;<>]+@[^\s@,;<>]+\.[^\s@,;<>]+$/.test(s);
 
-const CHAIR = 'Dr. Gerome Manson';
-const SIGNOFF = CHAIR.replace(/^Dr\.?\s+/, '');
+const DEFAULT_CHAIR = 'Dr. Gerome Manson';
 const AREAS = [
   {id:'gen', num:'i', label:'General background'},
   {id:'dev', num:'ii', label:'Current developments'},
@@ -459,7 +462,7 @@ function holidaysFor(y){
 function nextMonday(){ let d = new Date(); d = new Date(d.getFullYear(), d.getMonth(), d.getDate()+1); while (d.getDay()!==1) d = addDays(d,1); return iso(d); }
 const DEFAULTS = {
   start: nextMonday(), anchor:'meeting', gap:14,
-  cand:'', sup:'', ex2:'', ex3:'', supEmail:'', ex2Email:'', ex3Email:'',
+  chair:DEFAULT_CHAIR, chairEmail:'', cand:'', sup:'', ex2:'', ex3:'', supEmail:'', ex2Email:'', ex3Email:'',
   order:['sup','ex2','ex3'], areas:['gen','',''], focus:['','',''],
   off:{}, blocks:[], oralK:null
 };
@@ -470,14 +473,14 @@ try {
   if (!saved){
     const old = JSON.parse(localStorage.getItem('skhs-comps-v1') || 'null');
     if (old){
-      if (old.sup === CHAIR){ old.sup = ''; if (old.cand === 'Tasha Ignatius') old.cand = ''; }
+      if (old.sup === DEFAULT_CHAIR){ old.sup = ''; if (old.cand === 'Tasha Ignatius') old.cand = ''; }
       saved = old;
     }
   }
   if (saved && typeof saved === 'object') S = Object.assign(fresh(), saved);
 } catch(e){ S = fresh(); }
-delete S.chair;
-['cand','sup','ex2','ex3','supEmail','ex2Email','ex3Email'].forEach(k => { if (typeof S[k] !== 'string') S[k] = ''; });
+if (typeof S.chair !== 'string') S.chair = DEFAULT_CHAIR;
+['chairEmail','cand','sup','ex2','ex3','supEmail','ex2Email','ex3Email'].forEach(k => { if (typeof S[k] !== 'string') S[k] = ''; });
 if (![5,6,7,8,9,10].includes(S.oralK)) S.oralK = null;
 ['order','areas','focus'].forEach(k => { if (!Array.isArray(S[k]) || S[k].length !== 3) S[k] = fresh()[k]; });
 if (S.order.slice().sort().join() !== 'ex2,ex3,sup') S.order = ['sup','ex2','ex3'];
@@ -525,7 +528,7 @@ function names(){
     sup: S.sup || 'Supervisor',
     ex2: S.ex2 || 'Examiner 2',
     ex3: S.ex3 || 'Examiner 3',
-    chair: CHAIR
+    chair: S.chair || 'Chair'
   };
 }
 const writerOption = id => id==='sup' ? (S.sup ? S.sup+' (Supervisor)' : 'Supervisor') : names()[id];
@@ -781,7 +784,7 @@ function render(){
   // copy text
   const lines = [];
   lines.push(`Comprehensive exam schedule: ${N.cand}`);
-  lines.push(`Chair: ${N.chair}. Supervisor: ${N.sup}. Examiners: ${N.ex2}, ${N.ex3}.`);
+  lines.push(`Chair: ${N.chair}${validEmail(S.chairEmail) ? ' ('+S.chairEmail+')' : ''}. Supervisor: ${N.sup}. Examiners: ${N.ex2}, ${N.ex3}.`);
   lines.push('');
   lines.push('QUESTIONS');
   [0,1,2].forEach(i => {
@@ -815,13 +818,15 @@ function render(){
   const intro = oralSel
     ? `Below is the schedule for ${candPoss} comprehensive exam. The proposed oral exam date is ${fmt(oralSel.date)}. Please confirm whether this date works for you. Examiner reports are due to me by ${fmt(oralSel.report)}.`
     : `Below is the schedule for ${candPoss} comprehensive exam. The oral exam can fall on any of the dates listed at the end. Please tell me which of those dates work for you.`;
-  MAIL.body = ['Dear committee,', '', intro, '', ...lines, '', 'Best regards,', SIGNOFF, 'Chair'].join('\n');
+  const signoff = (S.chair || 'Chair').replace(/^Dr\.?\s+/, '');
+  MAIL.body = ['Dear committee,', '', intro, '', ...lines, '', 'Best regards,', signoff, 'Chair'].join('\n');
   $('#mailTo').textContent = MAIL.to || 'No email addresses yet';
   $('#mailTo').classList.toggle('empty', !MAIL.to);
   $('#mailSubj').textContent = MAIL.subj;
   const mnotes = [];
   if (missing.length) mnotes.push(['', `Add an email address for ${listJoin(missing)} in the Committee settings.`]);
-  if (bad.length) mnotes.push(['warn', `Check the email address for ${listJoin(bad)}. It is not in the form name@example.ca.`]);
+  const badAll = (S.chairEmail && !validEmail(S.chairEmail) ? [S.chair || 'the Chair'] : []).concat(bad);
+  if (badAll.length) mnotes.push(['warn', `Check the email address for ${listJoin(badAll)}. It is not in the form name@example.ca.`]);
   if (!oralSel) mnotes.push(['', 'No oral date is picked, so the message asks the committee which possible dates work.']);
   $('#mailNotes').innerHTML = mnotes.map(n => `<div class="note ${n[0]}">${esc(n[1])}</div>`).join('');
   $('#copyText').value = MAIL.body;
@@ -854,7 +859,7 @@ function copyText(text, el, label){
 
 function initInputs(){
   $('#start').value = S.start; $('#anchor').value = S.anchor; $('#gap').value = S.gap;
-  $('#chairName').textContent = CHAIR;
+  $('#p-chair').value = S.chair; $('#e-chair').value = S.chairEmail;
   $('#p-cand').value = S.cand; $('#p-sup').value = S.sup; $('#p-ex2').value = S.ex2; $('#p-ex3').value = S.ex3;
   $('#e-sup').value = S.supEmail; $('#e-ex2').value = S.ex2Email; $('#e-ex3').value = S.ex3Email;
   fillQuestions();
@@ -862,10 +867,10 @@ function initInputs(){
   $('#start').addEventListener('change', e => { if (e.target.value){ S.start = e.target.value; S.oralK = null; render(); } });
   $('#anchor').addEventListener('change', e => { S.anchor = e.target.value; render(); });
   $('#gap').addEventListener('change', e => { const v = Math.max(14, Math.min(40, parseInt(e.target.value,10)||14)); e.target.value = v; S.gap = v; render(); });
-  [['p-cand','cand'],['p-sup','sup'],['p-ex2','ex2'],['p-ex3','ex3']].forEach(([id,key]) => {
+  [['p-chair','chair'],['p-cand','cand'],['p-sup','sup'],['p-ex2','ex2'],['p-ex3','ex3']].forEach(([id,key]) => {
     $('#'+id).addEventListener('input', e => { S[key] = e.target.value.trim(); fillQuestions(); render(); });
   });
-  [['e-sup','supEmail'],['e-ex2','ex2Email'],['e-ex3','ex3Email']].forEach(([id,key]) => {
+  [['e-chair','chairEmail'],['e-sup','supEmail'],['e-ex2','ex2Email'],['e-ex3','ex3Email']].forEach(([id,key]) => {
     $('#'+id).addEventListener('input', e => { S[key] = e.target.value.trim(); render(); });
   });
   [0,1,2].forEach(i => {

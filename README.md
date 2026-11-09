@@ -10,7 +10,7 @@ A browser tool that builds the full timeline for a Science PhD comprehensive exa
 - Schedules each reading list release, memory aid deadline, written exam, 4-business-day break and response circulation.
 - Offers a calendar for picking the oral exam date from the eligible days, 5 to 10 business days after the third written exam, and adds the examiner report deadline.
 - Records the writer, topic area (i to v) and focus of each question, and checks the topic area rules.
-- Stores the Examiners' email addresses and writes a ready-to-copy email to the committee with the schedule and the proposed oral date.
+- Stores the Chair's and Examiners' email addresses and writes a ready-to-copy email to the committee with the schedule and the proposed oral date.
 - Shows a colour-coded month calendar with the breaks between exams highlighted.
 
 ## Running it
@@ -57,7 +57,7 @@ Names, email addresses and settings are saved only in the local storage of the b
 
 ## Changing the Chair
 
-The Chair is set to Dr. Gerome Manson. To use a different Chair, edit the `CHAIR` line near the top of the script in `index.html`.
+The Chair's name and email are entered in the Committee settings. The name defaults to Dr. Gerome Manson. To change that default, edit the `DEFAULT_CHAIR` line near the top of the script in `index.html`.
 
 ## Author
 
