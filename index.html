@@ -209,6 +209,10 @@ main{display:flex;flex-direction:column;gap:22px;min-width:0}
 textarea{width:100%;min-height:240px;font-family:var(--f-mono);font-size:12px;line-height:1.55;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;resize:vertical}
 .copy-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .status{font-size:13px;color:var(--oral)}
+.ics{margin-top:18px;padding-top:16px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:10px}
+.ics h3{margin:0;font-size:15px;font-weight:600}
+.ics-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.ics-count{font-size:13px;color:var(--muted)}
 @media (prefers-reduced-motion:no-preference){.oral-opt{transition:border-color .15s, background .15s}}
 </style>
 </head>
@@ -378,6 +382,29 @@ textarea{width:100%;min-height:240px;font-family:var(--f-mono);font-size:12px;li
           <span class="status" id="copyStatus" role="status"></span>
         </div>
         <p class="hint">This page never sends email. Copy the addresses, subject and message into a new email.</p>
+
+        <div class="ics" aria-labelledby="h-ics">
+          <h3 id="h-ics">Calendar invites</h3>
+          <p class="hint">Download the dates as an .ics file and attach it to the committee email. Each person opens the file to add the dates to Outlook, Google Calendar or Apple Calendar. Dates without a time are all-day events. Times are Kingston time.</p>
+          <div class="ics-grid">
+            <label for="icsSet">Dates to include
+              <select id="icsSet">
+                <option value="committee">Committee dates</option>
+                <option value="cand">Candidate dates</option>
+                <option value="oral">Oral exam only</option>
+                <option value="all">Every date</option>
+              </select>
+            </label>
+            <label for="t-meet">Meeting start (optional)<input type="time" id="t-meet" step="900"></label>
+            <label for="t-exam">Written exams start (optional)<input type="time" id="t-exam" step="900"></label>
+            <label for="t-oral">Oral start (optional)<input type="time" id="t-oral" step="900"></label>
+          </div>
+          <div class="copy-row">
+            <button class="btn" id="icsBtn" type="button">Download .ics</button>
+            <span class="ics-count" id="icsCount"></span>
+            <span class="status" id="icsStatus" role="status"></span>
+          </div>
+        </div>
       </section>
     </main>
   </div>
@@ -463,7 +490,8 @@ const DEFAULTS = {
   meetingDate:'', rl1Date:'', start: nextMonday(), anchor:'meeting', gap:14,
   chair:DEFAULT_CHAIR, chairEmail:'', cand:'', sup:'', ex2:'', ex3:'', supEmail:'', ex2Email:'', ex3Email:'',
   order:['sup','ex2','ex3'], areas:['gen','',''], focus:['','',''],
-  off:{}, blocks:[], oralK:null
+  off:{}, blocks:[], oralK:null,
+  icsSet:'committee', tMeet:'', tExam:'', tOral:''
 };
 const fresh = () => JSON.parse(JSON.stringify(DEFAULTS));
 let S = fresh();
@@ -488,6 +516,8 @@ S.focus = S.focus.map(f => typeof f === 'string' ? f : '');
 if (!/^\d{4}-\d{2}-\d{2}$/.test(S.start || '')) S.start = DEFAULTS.start;
 if (!S.off || typeof S.off !== 'object') S.off = {};
 if (!Array.isArray(S.blocks)) S.blocks = [];
+['tMeet','tExam','tOral'].forEach(k => { if (!/^\d{2}:\d{2}$/.test(S[k] || '')) S[k] = ''; });
+if (!['committee','cand','oral','all'].includes(S.icsSet)) S.icsSet = 'committee';
 const save = () => { try { localStorage.setItem('skhs-comps-v2', JSON.stringify(S)); } catch(e){} };
 
 /* ---------- business day engine ---------- */
@@ -666,8 +696,88 @@ function buildEvents(R){
   return E;
 }
 
+/* ---------- calendar invites (.ics) ---------- */
+const ICS_TZ = ['BEGIN:VTIMEZONE','TZID:America/Toronto',
+  'BEGIN:DAYLIGHT','TZOFFSETFROM:-0500','TZOFFSETTO:-0400','TZNAME:EDT','DTSTART:19700308T020000','RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU','END:DAYLIGHT',
+  'BEGIN:STANDARD','TZOFFSETFROM:-0400','TZOFFSETTO:-0500','TZNAME:EST','DTSTART:19701101T020000','RRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU','END:STANDARD',
+  'END:VTIMEZONE'];
+const icsEsc = s => String(s).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\r?\n/g,'\\n');
+const icsDate = d => iso(d).replace(/-/g,'');
+function icsFold(line){
+  const enc = new TextEncoder(); const out = []; let cur = '', n = 0;
+  for (const ch of line){
+    const b = enc.encode(ch).length;
+    if (n + b > (out.length ? 74 : 75)){ out.push(cur); cur = ''; n = 0; }
+    cur += ch; n += b;
+  }
+  out.push(cur);
+  return out.join('\r\n ');
+}
+const slug = s => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+
+function icsEvents(R, E, set){
+  const N = names();
+  const isMem = e => e.title.indexOf('Memory aid') === 0;
+  const isMeeting = e => e.tag === 'Meeting';
+  const pick = {
+    committee: e => e.kind !== 'rest' && !isMem(e),
+    cand: e => isMeeting(e) || ['release','cand','exam','rest','oral'].includes(e.kind),
+    oral: e => e.kind === 'oral',
+    all: () => true
+  }[set];
+  const L = E.filter(pick).map(e => {
+    const ev = {d:e.d, title:e.title, desc:e.detail+(e.who ? '\n\n'+e.who+(e.with ? ', '+e.with : '') : ''), key:e.kind+'-'+slug(e.title)};
+    if (e.kind === 'rest'){ const br = R.breaks.find(b => +b.start === +e.d); if (br) ev.end = br.end; }
+    if (isMeeting(e) && S.tMeet){ ev.time = S.tMeet; ev.hours = 1; }
+    if (e.kind === 'exam' && S.tExam){ ev.time = S.tExam; ev.hours = 4; }
+    if (e.kind === 'oral' && S.tOral){ ev.time = S.tOral; ev.hours = 3; }
+    if (e.kind === 'exam' || e.kind === 'oral') ev.title += ': '+N.cand;
+    return ev;
+  });
+  if (!S.oralK && set !== 'cand'){
+    L.push({d:R.orals[0].date, end:R.orals[5].date, key:'oral-window', title:'Oral exam window (date to be confirmed): '+N.cand,
+      desc:'The oral exam falls on a business day between '+fmt(R.orals[0].date)+' and '+fmt(R.orals[5].date)+', 5 to 10 business days after written exam 3. Examiner reports are due 2 business days before the oral.', tentative:true});
+  }
+  return L;
+}
+
+function buildICS(R, E, set){
+  const N = names();
+  const evs = icsEvents(R, E, set);
+  const now = new Date();
+  const stamp = now.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
+  const who = 'Chair: '+N.chair+'. Supervisor: '+N.sup+'. Examiners: '+N.ex2+', '+N.ex3+'.';
+  const L = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//SKHS Queens//Comps Scheduler//EN','CALSCALE:GREGORIAN','METHOD:PUBLISH',
+    'X-WR-CALNAME:'+icsEsc('Comps: '+N.cand), 'X-WR-TIMEZONE:America/Toronto', ...ICS_TZ];
+  const base = slug(N.cand) || 'candidate';
+  for (const ev of evs){
+    L.push('BEGIN:VEVENT');
+    L.push('UID:'+base+'-'+icsDate(ev.d)+'-'+ev.key+'@comps-scheduler.skhs');
+    L.push('DTSTAMP:'+stamp);
+    if (ev.time){
+      const [h,m] = ev.time.split(':').map(Number);
+      const t = (hh, mm) => String(hh).padStart(2,'0')+String(mm).padStart(2,'0')+'00';
+      const endMin = h*60 + m + ev.hours*60;
+      const endH = Math.min(23, Math.floor(endMin/60)), endM = endMin >= 24*60 ? 59 : endMin % 60;
+      L.push('DTSTART;TZID=America/Toronto:'+icsDate(ev.d)+'T'+t(h,m));
+      L.push('DTEND;TZID=America/Toronto:'+icsDate(ev.d)+'T'+t(endH,endM));
+    } else {
+      L.push('DTSTART;VALUE=DATE:'+icsDate(ev.d));
+      L.push('DTEND;VALUE=DATE:'+icsDate(addDays(ev.end || ev.d, 1)));
+      L.push('TRANSP:TRANSPARENT');
+    }
+    L.push('SUMMARY:'+icsEsc(ev.title));
+    L.push('DESCRIPTION:'+icsEsc(ev.desc+'\n\n'+who));
+    if (ev.tentative) L.push('STATUS:TENTATIVE');
+    L.push('END:VEVENT');
+  }
+  L.push('END:VCALENDAR');
+  return {text: L.map(icsFold).join('\r\n')+'\r\n', count: evs.length, name: 'comps-'+base+'-'+set+'.ics'};
+}
+
 /* ---------- render ---------- */
 const MAIL = {to:'', subj:'', body:''};
+let LAST = null;
 
 function render(){
   save();
@@ -875,6 +985,26 @@ function render(){
   if (!oralSel) mnotes.push(['', 'No oral date is picked, so the message asks the committee which possible dates work.']);
   $('#mailNotes').innerHTML = mnotes.map(n => `<div class="note ${n[0]}">${esc(n[1])}</div>`).join('');
   $('#copyText').value = MAIL.body;
+
+  // calendar invites
+  LAST = {R, E};
+  const nIcs = icsEvents(R, E, S.icsSet).length;
+  const oralOnlyEmpty = S.icsSet === 'oral' && !oralSel;
+  $('#icsCount').textContent = oralOnlyEmpty ? 'Pick an oral date first.' : nIcs+' event'+(nIcs===1?'':'s')+' in this file.';
+  $('#icsBtn').disabled = oralOnlyEmpty;
+}
+
+function downloadICS(){
+  if (!LAST) return;
+  const f = buildICS(LAST.R, LAST.E, S.icsSet);
+  const st = $('#icsStatus');
+  try {
+    const url = URL.createObjectURL(new Blob([f.text], {type:'text/calendar;charset=utf-8'}));
+    const a = document.createElement('a');
+    a.href = url; a.download = f.name; document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    st.textContent = 'Saved '+f.name+'.';
+  } catch(e){ st.textContent = 'The download was blocked by this browser.'; }
 }
 
 /* ---------- inputs ---------- */
@@ -954,6 +1084,14 @@ function initInputs(){
   $('#copyTo').addEventListener('click', () => copyText(MAIL.to, $('#mailTo'), 'Addresses'));
   $('#copySubj').addEventListener('click', () => copyText(MAIL.subj, $('#mailSubj'), 'Subject'));
   $('#copyBtn').addEventListener('click', () => copyText(MAIL.body, $('#copyText'), 'Message'));
+
+  $('#icsSet').value = S.icsSet;
+  $('#t-meet').value = S.tMeet; $('#t-exam').value = S.tExam; $('#t-oral').value = S.tOral;
+  $('#icsSet').addEventListener('change', e => { S.icsSet = e.target.value; $('#icsStatus').textContent = ''; render(); });
+  [['t-meet','tMeet'],['t-exam','tExam'],['t-oral','tOral']].forEach(([id,key]) => {
+    $('#'+id).addEventListener('change', e => { S[key] = /^\d{2}:\d{2}$/.test(e.target.value) ? e.target.value : ''; render(); });
+  });
+  $('#icsBtn').addEventListener('click', downloadICS);
 }
 
 initInputs();

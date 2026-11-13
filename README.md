@@ -12,6 +12,7 @@ A browser tool that builds the full timeline for a Science PhD comprehensive exa
 - Records the writer, topic area (i to v) and focus of each question, and checks the topic area rules.
 - Stores the Chair's and Examiners' email addresses and writes a ready-to-copy email to the committee with the schedule and the proposed oral date.
 - Shows a colour-coded month calendar with the breaks between exams highlighted.
+- Downloads the dates as an `.ics` calendar file (committee dates, Candidate dates, the oral exam only, or every date) to attach to the committee email. Meeting, written exam and oral start times are optional; without them the events are all-day.
 
 ## Running it
 
