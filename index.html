@@ -358,13 +358,13 @@ textarea{width:100%;min-height:240px;font-family:var(--f-mono);font-size:12px;li
       <section class="panel" aria-labelledby="h-oral">
         <div class="panel-head">
           <h2 id="h-oral">Oral exam date</h2>
-          <span class="hint">Outlined days are 5 to 10 business days after written exam 3, as the procedures set. Striped days, up to 20 business days after, are flexible options. Select one to propose it.</span>
+          <span class="hint">The oral can fall 5 to 10 business days after written exam 3. Outlined days, 5 to 8, are strongly recommended. Striped days, 9 and 10, are allowed. Select one to propose it.</span>
         </div>
         <div class="picker" id="picker"></div>
         <div class="legend">
           <span><i class="sw" style="background:var(--c-exam)"></i>Written exam 3</span>
-          <span><i class="sw" style="box-shadow:inset 0 0 0 2px var(--c-oral)"></i>Possible oral date</span>
-          <span><i class="sw" style="box-shadow:inset 0 0 0 2px var(--c-oral);background:repeating-linear-gradient(135deg,var(--oral-soft) 0 4px,var(--surface) 4px 8px)"></i>Flexible date, outside 5 to 10</span>
+          <span><i class="sw" style="box-shadow:inset 0 0 0 2px var(--c-oral)"></i>Recommended oral date</span>
+          <span><i class="sw" style="box-shadow:inset 0 0 0 2px var(--c-oral);background:repeating-linear-gradient(135deg,var(--oral-soft) 0 4px,var(--surface) 4px 8px)"></i>Allowed, outside the recommended 5 to 8</span>
           <span><i class="sw" style="background:var(--c-oral)"></i>Proposed oral date</span>
           <span><i class="sw" style="background:repeating-linear-gradient(135deg,var(--c-hol) 0 3px,transparent 3px 6px);border:1px solid var(--line)"></i>Holiday or blocked</span>
         </div>
@@ -517,7 +517,8 @@ try {
 } catch(e){ S = fresh(); }
 if (typeof S.chair !== 'string') S.chair = DEFAULT_CHAIR;
 ['chairEmail','cand','sup','ex2','ex3','supEmail','ex2Email','ex3Email'].forEach(k => { if (typeof S[k] !== 'string') S[k] = ''; });
-const ORAL_MAX = 20; // flexible oral options run to this many business days after exam 3
+const ORAL_MAX = 10; // latest oral, in business days after exam 3
+const ORAL_REC = 8;  // strongly recommended: 5 to this many business days
 if (!(Number.isInteger(S.oralK) && S.oralK >= 5 && S.oralK <= ORAL_MAX)) S.oralK = null;
 if (typeof S.noTue !== 'boolean') S.noTue = true;
 ['order','areas','focus'].forEach(k => { if (!Array.isArray(S[k]) || S[k].length !== 3) S[k] = fresh()[k]; });
@@ -612,7 +613,7 @@ function compute(){
   const breaks = per.map((p,i) => { const end = i < 2 ? addWD(per[i+1].rl,-1) : addWD(p.exam,4); return {start:addWD(p.exam,1), end, n:wdFrom(p.exam,end)}; });
   const orals = [];
   const oralAll = [];
-  for (let k = 5; k <= ORAL_MAX; k++){ const o = addWD(exams[2],k); const x = {k, date:o, report:addWD(o,-2), flex:k > 10}; oralAll.push(x); if (!x.flex) orals.push(x); }
+  for (let k = 5; k <= ORAL_MAX; k++){ const o = addWD(exams[2],k); const x = {k, date:o, report:addWD(o,-2), flex:k > ORAL_REC}; oralAll.push(x); orals.push(x); }
   return {raw, start, moved, meeting, meetingOff, lead, prep, reminder, pkg, finalPkg, rl1, exams, per, breaks, orals, oralAll, tueMoved, gap};
 }
 
@@ -707,7 +708,7 @@ function buildEvents(R){
     E.push({d:o.date, phase:'Oral exam', kind:'oral', tag:'Oral', title:'Oral exam',
       detail:'The committee first discusses the responses without the Candidate. Two rounds of about 20 to 25 minutes per Examiner, usually no more than 3 hours. The Candidate may bring printed copies of their responses only. The Chair and Examiners then sign the Outcome Form (Appendix D) for the Grad Coordinator.',
       who:N.chair+' chairs', with:N.cand+' and all 3 Examiners'});
-    if (o.flex) E[E.length-1].detail = 'Flexible date: '+o.k+' business days after written exam 3, outside the 5 to 10 in the procedures. '+E[E.length-1].detail;
+    if (o.flex) E[E.length-1].detail = o.k+' business days after written exam 3. Allowed, but the recommended range is 5 to '+ORAL_REC+'. '+E[E.length-1].detail;
   }
   E.sort((a,b) => a.d - b.d);
   return E;
@@ -753,7 +754,7 @@ function icsEvents(R, E, set){
   });
   if (!S.oralK && set !== 'cand'){
     L.push({d:R.orals[0].date, end:R.orals[5].date, key:'oral-window', title:'Oral exam window (date to be confirmed): '+N.cand,
-      desc:'The oral exam falls on a business day between '+fmt(R.orals[0].date)+' and '+fmt(R.orals[5].date)+', 5 to 10 business days after written exam 3. Examiner reports are due 2 business days before the oral.', tentative:true});
+      desc:'The oral exam falls on a business day between '+fmt(R.orals[0].date)+' and '+fmt(R.orals[5].date)+', 5 to 10 business days after written exam 3. 5 to '+ORAL_REC+' is strongly recommended. Examiner reports are due 2 business days before the oral.', tentative:true});
   }
   return L;
 }
@@ -839,7 +840,7 @@ function render(){
   const winBlocked = [...blocked.keys()].filter(k => { const d = parseISO(k); return d >= calStart && d <= R.orals[5].date && d.getDay()%6!==0; });
   if (winBlocked.length) notes.push(['', `${winBlocked.length} weekday${winBlocked.length>1?'s':''} in this window ${winBlocked.length>1?'are':'is'} non-working, which pushes later dates back.`]);
   R.tueMoved.forEach((t,i) => { if (t) notes.push(['', `Written exam ${i+1} would have fallen on ${fmtShort(t)}. No written exam is held on a Tuesday, so it moves to ${fmt(R.exams[i])}.`]); });
-  if (oralSel && oralSel.flex) notes.push(['warn', `<b>The proposed oral is ${oralSel.k} business days after written exam 3.</b> The procedures set 5 to 10. Confirm the later date with the Graduate Coordinator.`]);
+  if (oralSel && oralSel.flex) notes.push(['warn', `<b>The proposed oral is ${oralSel.k} business days after written exam 3.</b> Up to ${ORAL_MAX} is allowed, but 5 to ${ORAL_REC} is strongly recommended. Choose an earlier date if the committee can make it.`]);
   if (!S.oralK) notes.push(['', 'Pick a date in the Oral exam date section below to add the oral and the examiner report deadline to the schedule.']);
   $('#notes').innerHTML = notes.map(n => `<div class="note ${n[0]}">${n[1]}</div>`).join('');
 
@@ -876,7 +877,7 @@ function render(){
       const d = new Date(m.getFullYear(), m.getMonth(), day), k = iso(d), o = optByIso.get(k);
       if (o){
         const sel = S.oralK === o.k;
-        ph += `<button type="button" class="pday opt${o.flex ? ' flex' : ''}${sel ? ' sel' : ''}" data-k="${o.k}" aria-pressed="${sel}" aria-label="${esc(fmt(d))}, ${o.k} business days after written exam 3${o.flex ? ', a flexible date outside the procedures window' : ''}. Reports due ${esc(fmt(o.report))}." title="${esc(fmt(d))}: ${o.flex ? 'flexible date, ' : ''}reports due ${esc(fmtShort(o.report))}"><span>${day}</span><span class="pk">${sel ? '✓' : '+'+o.k}</span></button>`;
+        ph += `<button type="button" class="pday opt${o.flex ? ' flex' : ''}${sel ? ' sel' : ''}" data-k="${o.k}" aria-pressed="${sel}" aria-label="${esc(fmt(d))}, ${o.k} business days after written exam 3${o.flex ? ', allowed but outside the recommended 5 to '+ORAL_REC : ', recommended'}. Reports due ${esc(fmt(o.report))}." title="${esc(fmt(d))}: ${o.flex ? 'allowed, not recommended; ' : 'recommended; '}reports due ${esc(fmtShort(o.report))}"><span>${day}</span><span class="pk">${sel ? '✓' : '+'+o.k}</span></button>`;
       } else {
         let cls = '', title = fmt(d), tag = '';
         if (k === e3){ cls = 'e3'; title += ': written exam 3'; tag = '<span class="pk">Exam</span>'; }
@@ -893,8 +894,8 @@ function render(){
     const again = document.querySelector(`.pday.opt[data-k="${k}"]`); if (again) again.focus();
   }));
   $('#pickInfo').innerHTML = oralSel
-    ? `<div class="pick-sel"><span class="k">Proposed oral date</span><span class="v">${fmt(oralSel.date)}</span><span class="s">${oralSel.k} business days after written exam 3. Examiner reports due ${fmt(oralSel.report)}.${oralSel.k===5 ? ' This is the first business day after the 4-day break, so the Candidate has no preparation day in between.' : ''}${oralSel.flex ? ' This is a flexible date, outside the 5 to 10 business days in the procedures.' : ''}</span></div><button type="button" class="btn ghost" id="clearOral">Clear date</button>`
-    : `<div class="pick-sel"><span class="k">No date picked</span><span class="s">Written exam 3 is on ${fmt(R.exams[2])}. The procedures place the oral between ${fmtShort(R.orals[0].date)} and ${fmt(R.orals[5].date)}. Later dates, up to ${fmt(pickEnd)}, are available if the committee needs flexibility.</span></div>`;
+    ? `<div class="pick-sel"><span class="k">Proposed oral date</span><span class="v">${fmt(oralSel.date)}</span><span class="s">${oralSel.k} business days after written exam 3. Examiner reports due ${fmt(oralSel.report)}.${oralSel.k===5 ? ' This is the first business day after the 4-day break, so the Candidate has no preparation day in between.' : ''}${oralSel.flex ? ' This is allowed, but 5 to '+ORAL_REC+' business days is strongly recommended.' : ''}</span></div><button type="button" class="btn ghost" id="clearOral">Clear date</button>`
+    : `<div class="pick-sel"><span class="k">No date picked</span><span class="s">Written exam 3 is on ${fmt(R.exams[2])}. The oral can fall between ${fmtShort(R.orals[0].date)} and ${fmt(R.orals[5].date)}. Dates up to ${fmt(R.oralAll.find(o => o.k===ORAL_REC).date)} are strongly recommended.</span></div>`;
   const clr = $('#clearOral'); if (clr) clr.addEventListener('click', () => { S.oralK = null; render(); });
 
   // timeline
@@ -980,7 +981,7 @@ function render(){
   }
   if (!S.oralK){
     lines.push(''); lines.push('ORAL EXAM: POSSIBLE DATES');
-    for (const o of R.orals) lines.push(`${fmt(o.date).padEnd(17)}  Examiner reports due ${fmt(o.report)}`);
+    for (const o of R.orals) lines.push(`${fmt(o.date).padEnd(17)}  Examiner reports due ${fmt(o.report)}${o.flex ? '' : ' (recommended)'}`);
   }
 
   // email the committee
@@ -992,7 +993,7 @@ function render(){
   MAIL.to = toList.join(', ');
   MAIL.subj = `Comprehensive exam schedule: ${N.cand}` + (oralSel ? `, proposed oral ${fmt(oralSel.date)}` : '');
   const intro = oralSel
-    ? `Below is the schedule for ${candPoss} comprehensive exam. The proposed oral exam date is ${fmt(oralSel.date)}${oralSel.flex ? ', '+oralSel.k+' business days after the final written exam' : ''}. Please confirm whether this date works for you. Examiner reports are due to me by ${fmt(oralSel.report)}.`
+    ? `Below is the schedule for ${candPoss} comprehensive exam. The proposed oral exam date is ${fmt(oralSel.date)}. Please confirm whether this date works for you. Examiner reports are due to me by ${fmt(oralSel.report)}.`
     : `Below is the schedule for ${candPoss} comprehensive exam. The oral exam can fall on any of the dates listed at the end. Please tell me which of those dates work for you.`;
   const signoff = (S.chair || 'Chair').replace(/^Dr\.?\s+/, '');
   MAIL.body = ['Dear committee,', '', intro, '', ...lines, '', 'Timeline form for signatures (older SKHS form, still in use):', FORM_URL, '', 'Best regards,', signoff, 'Chair'].join('\n');

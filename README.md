@@ -8,7 +8,7 @@ A browser tool that builds the full timeline for a Science PhD comprehensive exa
 
 - Schedules the initial organizing meeting, the reminder to Examiners, exam packages to the Chair and final approved packages.
 - Schedules each reading list release, memory aid deadline, written exam, 4-business-day break and response circulation.
-- Offers a calendar for picking the oral exam date, 5 to 10 business days after the third written exam, with later flexible dates up to 20 business days after. It adds the examiner report deadline.
+- Offers a calendar for picking the oral exam date, 5 to 10 business days after the third written exam, with 5 to 8 marked as strongly recommended. It adds the examiner report deadline.
 - Moves any written exam that lands on a Tuesday to the Wednesday.
 - Records the writer, topic area (i to v) and focus of each question, and checks the topic area rules.
 - Stores the Chair's and Examiners' email addresses and writes a ready-to-copy email to the committee with the schedule and the proposed oral date.
@@ -43,7 +43,7 @@ All intervals are business days: Monday to Friday, minus the days off listed bel
 | No Tuesday exams | A written exam that lands on a Tuesday moves to the Wednesday. Its reading list still goes out 10 business days before it. This can be switched off. |
 | Response circulated | Within 3 business days after each written exam |
 | Examiner reports to Chair | At least 2 business days before the oral |
-| Oral exam | 5 to 10 business days after the final written exam. Later dates, up to 20 business days after, can be picked as flexible options and are flagged. |
+| Oral exam | 5 to 10 business days after the final written exam. 5 to 8 is strongly recommended; days 9 and 10 are flagged. |
 
 The organizing meeting and the start date are entered separately. The tool warns when the meeting is fewer than 25 business days before the start date, and offers to move either date.
 
