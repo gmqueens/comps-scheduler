@@ -358,13 +358,13 @@ textarea{width:100%;min-height:240px;font-family:var(--f-mono);font-size:12px;li
       <section class="panel" aria-labelledby="h-oral">
         <div class="panel-head">
           <h2 id="h-oral">Oral exam date</h2>
-          <span class="hint">The oral can fall 5 to 10 business days after written exam 3. Outlined days, 5 to 8, are strongly recommended. Striped days, 9 and 10, are allowed. Select one to propose it.</span>
+          <span class="hint">The oral can fall 5 to 15 business days after written exam 3. Outlined days, 5 to 10, are recommended. Striped days, 11 to 15, are allowed. Select one to propose it.</span>
         </div>
         <div class="picker" id="picker"></div>
         <div class="legend">
           <span><i class="sw" style="background:var(--c-exam)"></i>Written exam 3</span>
           <span><i class="sw" style="box-shadow:inset 0 0 0 2px var(--c-oral)"></i>Recommended oral date</span>
-          <span><i class="sw" style="box-shadow:inset 0 0 0 2px var(--c-oral);background:repeating-linear-gradient(135deg,var(--oral-soft) 0 4px,var(--surface) 4px 8px)"></i>Allowed, outside the recommended 5 to 8</span>
+          <span><i class="sw" style="box-shadow:inset 0 0 0 2px var(--c-oral);background:repeating-linear-gradient(135deg,var(--oral-soft) 0 4px,var(--surface) 4px 8px)"></i>Allowed, outside the recommended 5 to 10</span>
           <span><i class="sw" style="background:var(--c-oral)"></i>Proposed oral date</span>
           <span><i class="sw" style="background:repeating-linear-gradient(135deg,var(--c-hol) 0 3px,transparent 3px 6px);border:1px solid var(--line)"></i>Holiday or blocked</span>
         </div>
@@ -517,8 +517,8 @@ try {
 } catch(e){ S = fresh(); }
 if (typeof S.chair !== 'string') S.chair = DEFAULT_CHAIR;
 ['chairEmail','cand','sup','ex2','ex3','supEmail','ex2Email','ex3Email'].forEach(k => { if (typeof S[k] !== 'string') S[k] = ''; });
-const ORAL_MAX = 10; // latest oral, in business days after exam 3
-const ORAL_REC = 8;  // strongly recommended: 5 to this many business days
+const ORAL_MAX = 15; // latest oral, in business days after exam 3
+const ORAL_REC = 10; // recommended: 5 to this many business days
 if (!(Number.isInteger(S.oralK) && S.oralK >= 5 && S.oralK <= ORAL_MAX)) S.oralK = null;
 if (typeof S.noTue !== 'boolean') S.noTue = true;
 ['order','areas','focus'].forEach(k => { if (!Array.isArray(S[k]) || S[k].length !== 3) S[k] = fresh()[k]; });
@@ -753,8 +753,8 @@ function icsEvents(R, E, set){
     return ev;
   });
   if (!S.oralK && set !== 'cand'){
-    L.push({d:R.orals[0].date, end:R.orals[5].date, key:'oral-window', title:'Oral exam window (date to be confirmed): '+N.cand,
-      desc:'The oral exam falls on a business day between '+fmt(R.orals[0].date)+' and '+fmt(R.orals[5].date)+', 5 to 10 business days after written exam 3. 5 to '+ORAL_REC+' is strongly recommended. Examiner reports are due 2 business days before the oral.', tentative:true});
+    L.push({d:R.orals[0].date, end:R.orals[R.orals.length-1].date, key:'oral-window', title:'Oral exam window (date to be confirmed): '+N.cand,
+      desc:'The oral exam falls on a business day between '+fmt(R.orals[0].date)+' and '+fmt(R.orals[R.orals.length-1].date)+', 5 to '+ORAL_MAX+' business days after written exam 3. 5 to '+ORAL_REC+' is recommended. Examiner reports are due 2 business days before the oral.', tentative:true});
   }
   return L;
 }
@@ -825,7 +825,7 @@ function render(){
     ['Written exam 1', fmt(R.exams[0]), 'exam', areaLabel(0) || 'Area not chosen'],
     ['Written exam 2', fmt(R.exams[1]), 'exam', areaLabel(1) || 'Area not chosen'],
     ['Written exam 3', fmt(R.exams[2]), 'exam', areaLabel(2) || 'Area not chosen'],
-    [oralSel ? 'Oral exam' : 'Oral window', oralSel ? fmt(oralSel.date) : fmtShort(R.orals[0].date)+' to '+fmtShort(R.orals[5].date), 'oral', '']
+    [oralSel ? 'Oral exam' : 'Oral window', oralSel ? fmt(oralSel.date) : fmtShort(R.orals[0].date)+' to '+fmtShort(R.orals[R.orals.length-1].date), 'oral', '']
   ];
   $('#keys').innerHTML = keys.map(k => `<div class="key ${k[2]}"><span class="k">${k[0]}</span><span class="v">${k[1]}</span>${k[3] ? `<span class="a">${esc(k[3])}</span>` : ''}</div>`).join('');
 
@@ -837,10 +837,10 @@ function render(){
   const notes = [];
   for (const n of DC.out) if (n[0] === 'warn') notes.push(n);
   notes.push(['', `From the first reading list (business day 1) to the ${oralSel ? 'proposed' : 'earliest possible'} oral is <b>${bdOral} business days</b>. The procedures expect about 50 to 55.`]);
-  const winBlocked = [...blocked.keys()].filter(k => { const d = parseISO(k); return d >= calStart && d <= R.orals[5].date && d.getDay()%6!==0; });
+  const winBlocked = [...blocked.keys()].filter(k => { const d = parseISO(k); return d >= calStart && d <= R.orals[R.orals.length-1].date && d.getDay()%6!==0; });
   if (winBlocked.length) notes.push(['', `${winBlocked.length} weekday${winBlocked.length>1?'s':''} in this window ${winBlocked.length>1?'are':'is'} non-working, which pushes later dates back.`]);
   R.tueMoved.forEach((t,i) => { if (t) notes.push(['', `Written exam ${i+1} would have fallen on ${fmtShort(t)}. No written exam is held on a Tuesday, so it moves to ${fmt(R.exams[i])}.`]); });
-  if (oralSel && oralSel.flex) notes.push(['warn', `<b>The proposed oral is ${oralSel.k} business days after written exam 3.</b> Up to ${ORAL_MAX} is allowed, but 5 to ${ORAL_REC} is strongly recommended. Choose an earlier date if the committee can make it.`]);
+  if (oralSel && oralSel.flex) notes.push(['warn', `<b>The proposed oral is ${oralSel.k} business days after written exam 3.</b> Up to ${ORAL_MAX} is allowed, but 5 to ${ORAL_REC} is recommended. Choose an earlier date if the committee can make it.`]);
   if (!S.oralK) notes.push(['', 'Pick a date in the Oral exam date section below to add the oral and the examiner report deadline to the schedule.']);
   $('#notes').innerHTML = notes.map(n => `<div class="note ${n[0]}">${n[1]}</div>`).join('');
 
@@ -894,8 +894,8 @@ function render(){
     const again = document.querySelector(`.pday.opt[data-k="${k}"]`); if (again) again.focus();
   }));
   $('#pickInfo').innerHTML = oralSel
-    ? `<div class="pick-sel"><span class="k">Proposed oral date</span><span class="v">${fmt(oralSel.date)}</span><span class="s">${oralSel.k} business days after written exam 3. Examiner reports due ${fmt(oralSel.report)}.${oralSel.k===5 ? ' This is the first business day after the 4-day break, so the Candidate has no preparation day in between.' : ''}${oralSel.flex ? ' This is allowed, but 5 to '+ORAL_REC+' business days is strongly recommended.' : ''}</span></div><button type="button" class="btn ghost" id="clearOral">Clear date</button>`
-    : `<div class="pick-sel"><span class="k">No date picked</span><span class="s">Written exam 3 is on ${fmt(R.exams[2])}. The oral can fall between ${fmtShort(R.orals[0].date)} and ${fmt(R.orals[5].date)}. Dates up to ${fmt(R.oralAll.find(o => o.k===ORAL_REC).date)} are strongly recommended.</span></div>`;
+    ? `<div class="pick-sel"><span class="k">Proposed oral date</span><span class="v">${fmt(oralSel.date)}</span><span class="s">${oralSel.k} business days after written exam 3. Examiner reports due ${fmt(oralSel.report)}.${oralSel.k===5 ? ' This is the first business day after the 4-day break, so the Candidate has no preparation day in between.' : ''}${oralSel.flex ? ' This is allowed, but 5 to '+ORAL_REC+' business days is recommended.' : ''}</span></div><button type="button" class="btn ghost" id="clearOral">Clear date</button>`
+    : `<div class="pick-sel"><span class="k">No date picked</span><span class="s">Written exam 3 is on ${fmt(R.exams[2])}. The oral can fall between ${fmtShort(R.orals[0].date)} and ${fmt(R.orals[R.orals.length-1].date)}. Dates up to ${fmt(R.oralAll.find(o => o.k===ORAL_REC).date)} are recommended.</span></div>`;
   const clr = $('#clearOral'); if (clr) clr.addEventListener('click', () => { S.oralK = null; render(); });
 
   // timeline
@@ -913,7 +913,7 @@ function render(){
     </div>`;
   }
   if (!S.oralK){
-    html += `<div class="phase"><h3>Oral exam</h3><span class="sub">Window ${fmtShort(R.orals[0].date)} to ${fmtShort(R.orals[5].date)}. Pick a date in the Oral exam date section.</span></div>`;
+    html += `<div class="phase"><h3>Oral exam</h3><span class="sub">Window ${fmtShort(R.orals[0].date)} to ${fmtShort(R.orals[R.orals.length-1].date)}. Pick a date in the Oral exam date section.</span></div>`;
   }
   $('#timeline').innerHTML = html;
 
@@ -931,7 +931,7 @@ function render(){
     }
   });
   const first = new Date(calStart.getFullYear(), calStart.getMonth(), 1);
-  const lastD = oralSel && oralSel.date > R.orals[5].date ? oralSel.date : R.orals[5].date;
+  const lastD = oralSel && oralSel.date > R.orals[R.orals.length-1].date ? oralSel.date : R.orals[R.orals.length-1].date;
   let mhtml = '';
   for (let m = new Date(first); m <= lastD; m = new Date(m.getFullYear(), m.getMonth()+1, 1)){
     mhtml += `<div class="month"><h4>${MONL[m.getMonth()]} ${m.getFullYear()}</h4><div class="grid">`;
