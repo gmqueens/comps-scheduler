@@ -28,10 +28,11 @@ All intervals are business days: Monday to Friday, minus the days off listed bel
 
 | Step | Timing |
 |---|---|
-| Exam packages to Chair | 15 business days after the organizing meeting |
+| Organizing meeting | At least 25 business days before the start date |
+| Exam packages to Chair | 10 business days before the start date, giving Examiners 15 business days after the meeting |
 | Reminder email to Examiners | 5 business days before packages are due |
-| Final approved packages to Chair | 5 business days after packages are due |
-| First reading list to Candidate | 10 business days after packages are due |
+| Final approved packages to Chair | 5 business days before the start date |
+| First reading list to Candidate | The start date (business day 1) |
 | Each reading list to Candidate | 10 business days before its written exam |
 | Memory aid for approval | At least 3 business days before each written exam |
 | Break after each written exam | 4 business days |
@@ -41,7 +42,7 @@ All intervals are business days: Monday to Friday, minus the days off listed bel
 | Examiner reports to Chair | At least 2 business days before the oral |
 | Oral exam | 5 to 10 business days after the final written exam |
 
-The start date can be set as the organizing meeting, the package deadline or the first reading list.
+The organizing meeting and the start date are entered separately. The tool warns when the meeting is fewer than 25 business days before the start date, and offers to move either date.
 
 ## Topic areas
 

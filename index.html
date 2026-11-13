@@ -75,6 +75,7 @@ input[type=text],input[type=email],input[type=date],input[type=number],select{fo
 input:focus-visible,select:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .hint{font-size:12px;color:var(--muted);margin:0}
+.fix-row{display:flex;flex-wrap:wrap;gap:8px}
 .check{flex-direction:row;align-items:flex-start;gap:8px;color:var(--ink);font-weight:400;font-size:13px}
 .check input{margin-top:3px;accent-color:var(--accent)}
 .checks{display:flex;flex-direction:column;gap:6px}
@@ -216,23 +217,21 @@ textarea{width:100%;min-height:240px;font-family:var(--f-mono);font-size:12px;li
   <header>
     <div class="eyebrow">SKHS · Science PhD comprehensive exam</div>
     <h1>Comps Scheduler</h1>
-    <p class="lede">Enter a start date and the three questions. The schedule follows the SKHS Forms and Procedures (version of 2 Nov 2026). Business days exclude weekends, Ontario statutory holidays, the Queen's winter closure and any dates you block.</p>
+    <p class="lede">Enter the organizing meeting, the start date and the three questions. The schedule follows the SKHS Forms and Procedures (version of 2 Nov 2026). Business days exclude weekends, Ontario statutory holidays, the Queen's winter closure and any dates you block.</p>
   </header>
 
   <div class="layout">
     <aside aria-label="Exam settings">
       <fieldset>
-        <legend><h3>Start</h3></legend>
-        <label for="start">Start date
+        <legend><h3>Dates</h3></legend>
+        <label for="meeting">Initial organizing meeting
+          <input type="date" id="meeting">
+        </label>
+        <label for="start">Start date: first reading list to Candidate
           <input type="date" id="start">
         </label>
-        <label for="anchor">The start date is the
-          <select id="anchor">
-            <option value="meeting">Initial organizing meeting</option>
-            <option value="pkg">Exam packages due to Chair</option>
-            <option value="rl1">First reading list to Candidate</option>
-          </select>
-        </label>
+        <p class="hint">The start date is business day 1 in the procedures. Package deadlines count back from it. The meeting needs to be at least 25 business days earlier.</p>
+        <div class="notes" id="dateNotes"></div>
         <label for="gap">Business days between written exams
           <input type="number" id="gap" min="14" max="40" step="1" value="14">
         </label>
@@ -461,7 +460,7 @@ function holidaysFor(y){
 /* ---------- state ---------- */
 function nextMonday(){ let d = new Date(); d = new Date(d.getFullYear(), d.getMonth(), d.getDate()+1); while (d.getDay()!==1) d = addDays(d,1); return iso(d); }
 const DEFAULTS = {
-  start: nextMonday(), anchor:'meeting', gap:14,
+  meetingDate:'', rl1Date:'', start: nextMonday(), anchor:'meeting', gap:14,
   chair:DEFAULT_CHAIR, chairEmail:'', cand:'', sup:'', ex2:'', ex3:'', supEmail:'', ex2Email:'', ex3Email:'',
   order:['sup','ex2','ex3'], areas:['gen','',''], focus:['','',''],
   off:{}, blocks:[], oralK:null
@@ -521,6 +520,22 @@ function wdFrom(a, b){
   while (x > b){ x = addDays(x,-1); if (isWorking(x)) n--; } return n;
 }
 
+/* ---------- meeting and start dates ---------- */
+const PREP = 25; // business days from the organizing meeting to the first reading list: 15 to prepare packages, then 10 for the Chair's review
+const ISO_RE = /^\d{4}-\d{2}-\d{2}$/;
+if (!ISO_RE.test(S.meetingDate || '') || !ISO_RE.test(S.rl1Date || '')){
+  // Carry over a schedule saved with the older single start date
+  const raw = parseISO(S.start);
+  buildBlocked(raw.getFullYear()-1, raw.getFullYear()+2);
+  const st = nextWorking(raw);
+  let meeting, rl1;
+  if (S.anchor === 'pkg'){ meeting = addWD(st,-15); rl1 = addWD(st,10); }
+  else if (S.anchor === 'rl1'){ meeting = addWD(st,-PREP); rl1 = st; }
+  else { meeting = st; rl1 = addWD(st,PREP); }
+  S.meetingDate = iso(meeting); S.rl1Date = iso(rl1);
+}
+delete S.start; delete S.anchor;
+
 /* ---------- compute ---------- */
 function names(){
   return {
@@ -534,16 +549,16 @@ function names(){
 const writerOption = id => id==='sup' ? (S.sup ? S.sup+' (Supervisor)' : 'Supervisor') : names()[id];
 
 function compute(){
-  const raw = parseISO(S.start);
-  buildBlocked(raw.getFullYear()-1, raw.getFullYear()+2);
+  const meeting = parseISO(S.meetingDate), raw = parseISO(S.rl1Date);
+  buildBlocked(Math.min(meeting.getFullYear(), raw.getFullYear())-1, Math.max(meeting.getFullYear(), raw.getFullYear())+2);
   const start = nextWorking(raw);
   const moved = iso(start) !== iso(raw);
-  let meeting, pkg, rl1;
-  if (S.anchor==='meeting'){ meeting = start; pkg = addWD(meeting,15); }
-  else if (S.anchor==='pkg'){ pkg = start; meeting = addWD(pkg,-15); }
-  else { rl1 = start; pkg = addWD(rl1,-10); meeting = addWD(pkg,-15); }
-  const finalPkg = addWD(pkg,5);
-  rl1 = addWD(pkg,10);
+  const rl1 = start;
+  const pkg = addWD(rl1,-10);
+  const finalPkg = addWD(rl1,-5);
+  const lead = wdFrom(meeting, rl1); // business days from the meeting to the start date
+  const prep = wdFrom(meeting, pkg); // business days Examiners have to prepare packages
+  const meetingOff = !isWorking(meeting);
   const gap = Math.max(14, Number(S.gap)||14); // business days strictly between written exams
   const exams = [addWD(rl1,10)];
   exams.push(addWD(exams[0],gap+1)); exams.push(addWD(exams[1],gap+1));
@@ -552,7 +567,28 @@ function compute(){
   const breaks = per.map((p,i) => { const end = i < 2 ? addWD(per[i+1].rl,-1) : addWD(p.exam,4); return {start:addWD(p.exam,1), end, n:wdFrom(p.exam,end)}; });
   const orals = [];
   for (let k = 5; k <= 10; k++){ const o = addWD(exams[2],k); orals.push({k, date:o, report:addWD(o,-2)}); }
-  return {raw, start, moved, meeting, reminder, pkg, finalPkg, rl1, exams, per, breaks, orals, gap};
+  return {raw, start, moved, meeting, meetingOff, lead, prep, reminder, pkg, finalPkg, rl1, exams, per, breaks, orals, gap};
+}
+
+function dateChecks(R){
+  const out = [];
+  const earliest = addWD(R.meeting, PREP), latest = addWD(R.rl1, -PREP);
+  let short = false;
+  if (R.meeting >= R.rl1){
+    short = true;
+    out.push(['warn', `<b>The organizing meeting is not before the start date.</b> The meeting needs to be at least ${PREP} business days before the start date.`]);
+  } else if (R.lead < PREP){
+    short = true;
+    const prepTxt = R.prep > 0
+      ? `Examiners would have only ${R.prep} business day${R.prep===1?'':'s'} to prepare their packages, not 15.`
+      : `The package deadline, ${fmt(R.pkg)}, falls ${R.prep===0 ? 'on the day of' : 'before'} the meeting.`;
+    out.push(['warn', `<b>The meeting and the start date are only ${R.lead} business day${R.lead===1?'':'s'} apart.</b> The procedures need at least ${PREP}: 15 for Examiners to prepare packages, then 10 for the Chair's review. ${prepTxt}`]);
+  } else {
+    out.push(['ok', `The meeting is ${R.lead} business days before the start date. At least ${PREP} are needed.`]);
+  }
+  if (R.meetingOff) out.push(['warn', `${fmt(R.meeting)} is not a business day. Check the meeting date.`]);
+  if (R.moved) out.push(['warn', `${fmt(R.raw)} is not a business day. The schedule starts on ${fmt(R.start)}.`]);
+  return {out, short, earliest, latest};
 }
 
 function areaChecks(){
@@ -587,7 +623,7 @@ function buildEvents(R){
   const E = [];
   const planned = S.areas.every(Boolean) ? ' Planned areas: '+S.areas.map(a => areaById(a).label).join('; ')+'.' : '';
   E.push({d:R.meeting, phase:'Setup', kind:'committee', tag:'Meeting', title:'Initial organizing meeting',
-    detail:'Review the process, identify 3 topic areas and complete the Planning Form (Appendix C).'+planned+' Zoom or Teams attendance is allowed. Accommodations are arranged before this meeting.',
+    detail:'Review the process, identify 3 topic areas and complete the Planning Form (Appendix C).'+planned+' Zoom or Teams attendance is allowed. Accommodations are arranged before this meeting.'+(R.prep > 0 ? ' Examiners then have '+R.prep+' business days to prepare their packages; the procedures call for 15.' : ''),
     who:N.sup+' convenes', with:'Full committee and Candidate'});
   E.push({d:R.meeting, phase:'Setup', kind:'committee', tag:'Due', title:'Signed Planning Form to Grad Coordinator',
     detail:'Immediately after the initial meeting.', who:N.chair, with:'to Grad Coordinator'});
@@ -639,6 +675,15 @@ function render(){
   const N = names();
   const E = buildEvents(R);
   const oralSel = S.oralK ? R.orals.find(x => x.k===S.oralK) : null;
+  const DC = dateChecks(R);
+  const calStart = R.meeting < R.reminder ? R.meeting : R.reminder;
+
+  // meeting and start date checks
+  let dn = DC.out.map(n => `<div class="note ${n[0]}">${n[1]}</div>`).join('');
+  if (DC.short) dn += `<div class="fix-row"><button type="button" class="btn ghost" id="fixStart">Move start to ${fmtShort(DC.earliest)}</button><button type="button" class="btn ghost" id="fixMeeting">Move meeting to ${fmtShort(DC.latest)}</button></div>`;
+  $('#dateNotes').innerHTML = dn;
+  const fs = $('#fixStart'); if (fs) fs.addEventListener('click', () => { S.rl1Date = iso(DC.earliest); $('#start').value = S.rl1Date; S.oralK = null; render(); });
+  const fm = $('#fixMeeting'); if (fm) fm.addEventListener('click', () => { S.meetingDate = iso(DC.latest); $('#meeting').value = S.meetingDate; render(); });
 
   // sidebar exam dates
   R.exams.forEach((d,i) => { $('#qd'+(i+1)).textContent = fmtShort(d); });
@@ -647,7 +692,7 @@ function render(){
   const keys = [
     ['Organizing meeting', fmt(R.meeting), '', ''],
     ['Packages to Chair', fmt(R.pkg), '', ''],
-    ['First reading list', fmt(R.rl1), '', ''],
+    ['Start: first reading list', fmt(R.rl1), '', ''],
     ['Written exam 1', fmt(R.exams[0]), 'exam', areaLabel(0) || 'Area not chosen'],
     ['Written exam 2', fmt(R.exams[1]), 'exam', areaLabel(1) || 'Area not chosen'],
     ['Written exam 3', fmt(R.exams[2]), 'exam', areaLabel(2) || 'Area not chosen'],
@@ -661,9 +706,9 @@ function render(){
   $('#spanInfo').textContent = `${oralSel ? 'Proposed' : 'Earliest'} oral on business day ${bdOral} (${weeks} weeks after the first reading list)`;
 
   const notes = [];
-  if (R.moved) notes.push(['warn', `<b>${fmt(R.raw)}</b> is not a business day. The schedule starts on <b>${fmt(R.start)}</b>.`]);
+  for (const n of DC.out) if (n[0] === 'warn') notes.push(n);
   notes.push(['', `From the first reading list (business day 1) to the ${oralSel ? 'proposed' : 'earliest possible'} oral is <b>${bdOral} business days</b>. The procedures expect about 50 to 55.`]);
-  const winBlocked = [...blocked.keys()].filter(k => { const d = parseISO(k); return d >= R.meeting && d <= R.orals[5].date && d.getDay()%6!==0; });
+  const winBlocked = [...blocked.keys()].filter(k => { const d = parseISO(k); return d >= calStart && d <= R.orals[5].date && d.getDay()%6!==0; });
   if (winBlocked.length) notes.push(['', `${winBlocked.length} weekday${winBlocked.length>1?'s':''} in this window ${winBlocked.length>1?'are':'is'} non-working, which pushes later dates back.`]);
   if (!S.oralK) notes.push(['', 'Pick a date in the Oral exam date section below to add the oral and the examiner report deadline to the schedule.']);
   $('#notes').innerHTML = notes.map(n => `<div class="note ${n[0]}">${n[1]}</div>`).join('');
@@ -753,7 +798,7 @@ function render(){
       if (isWorking(d)){ n++; brk.set(iso(d), {exam:i+1, n, total:br.n}); }
     }
   });
-  const first = new Date(R.meeting.getFullYear(), R.meeting.getMonth(), 1);
+  const first = new Date(calStart.getFullYear(), calStart.getMonth(), 1);
   const lastD = R.orals[5].date;
   let mhtml = '';
   for (let m = new Date(first); m <= lastD; m = new Date(m.getFullYear(), m.getMonth()+1, 1)){
@@ -858,14 +903,14 @@ function copyText(text, el, label){
 }
 
 function initInputs(){
-  $('#start').value = S.start; $('#anchor').value = S.anchor; $('#gap').value = S.gap;
+  $('#meeting').value = S.meetingDate; $('#start').value = S.rl1Date; $('#gap').value = S.gap;
   $('#p-chair').value = S.chair; $('#e-chair').value = S.chairEmail;
   $('#p-cand').value = S.cand; $('#p-sup').value = S.sup; $('#p-ex2').value = S.ex2; $('#p-ex3').value = S.ex3;
   $('#e-sup').value = S.supEmail; $('#e-ex2').value = S.ex2Email; $('#e-ex3').value = S.ex3Email;
   fillQuestions();
 
-  $('#start').addEventListener('change', e => { if (e.target.value){ S.start = e.target.value; S.oralK = null; render(); } });
-  $('#anchor').addEventListener('change', e => { S.anchor = e.target.value; render(); });
+  $('#meeting').addEventListener('change', e => { if (e.target.value){ S.meetingDate = e.target.value; render(); } });
+  $('#start').addEventListener('change', e => { if (e.target.value){ S.rl1Date = e.target.value; S.oralK = null; render(); } });
   $('#gap').addEventListener('change', e => { const v = Math.max(14, Math.min(40, parseInt(e.target.value,10)||14)); e.target.value = v; S.gap = v; render(); });
   [['p-chair','chair'],['p-cand','cand'],['p-sup','sup'],['p-ex2','ex2'],['p-ex3','ex3']].forEach(([id,key]) => {
     $('#'+id).addEventListener('input', e => { S[key] = e.target.value.trim(); fillQuestions(); render(); });
