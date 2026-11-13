@@ -62,6 +62,9 @@ header{display:flex;flex-direction:column;gap:6px;margin-bottom:24px}
 .eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
 h1{font-family:var(--f-display);font-weight:700;font-size:clamp(28px,4vw,38px);line-height:1.1;margin:0;text-wrap:balance}
 .lede{color:var(--muted);max-width:68ch;margin:0}
+.formlink{margin:10px 0 0;font-size:14px}
+.formlink a{color:var(--accent);font-weight:600;text-underline-offset:3px}
+.formlink a:hover{text-decoration-thickness:2px}
 h2{font-family:var(--f-display);font-weight:600;font-size:21px;margin:0;text-wrap:balance}
 h3{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0;font-weight:600}
 .layout{display:grid;grid-template-columns:340px minmax(0,1fr);gap:24px;align-items:start}
@@ -222,6 +225,7 @@ textarea{width:100%;min-height:240px;font-family:var(--f-mono);font-size:12px;li
     <div class="eyebrow">SKHS · Science PhD comprehensive exam</div>
     <h1>Comps Scheduler</h1>
     <p class="lede">Enter the organizing meeting, the start date and the three questions. The schedule follows the SKHS Forms and Procedures (version of 2 Nov 2026). Business days exclude weekends, Ontario statutory holidays, the Queen's winter closure and any dates you block.</p>
+    <p class="formlink"><a href="https://skhs.queensu.ca/sites/skhswww/files/uploaded_files/Grad%20Files/Science_PhDComprehensiveExam_TimelineForm_Instructions.pdf" target="_blank" rel="noopener">Timeline form for signatures (PDF)</a> <span class="hint">An older SKHS form, still used for signatures. The dates here follow the 2 Nov 2026 procedures.</span></p>
   </header>
 
   <div class="layout">
@@ -777,6 +781,7 @@ function buildICS(R, E, set){
 
 /* ---------- render ---------- */
 const MAIL = {to:'', subj:'', body:''};
+const FORM_URL = 'https://skhs.queensu.ca/sites/skhswww/files/uploaded_files/Grad%20Files/Science_PhDComprehensiveExam_TimelineForm_Instructions.pdf';
 let LAST = null;
 
 function render(){
@@ -974,7 +979,7 @@ function render(){
     ? `Below is the schedule for ${candPoss} comprehensive exam. The proposed oral exam date is ${fmt(oralSel.date)}. Please confirm whether this date works for you. Examiner reports are due to me by ${fmt(oralSel.report)}.`
     : `Below is the schedule for ${candPoss} comprehensive exam. The oral exam can fall on any of the dates listed at the end. Please tell me which of those dates work for you.`;
   const signoff = (S.chair || 'Chair').replace(/^Dr\.?\s+/, '');
-  MAIL.body = ['Dear committee,', '', intro, '', ...lines, '', 'Best regards,', signoff, 'Chair'].join('\n');
+  MAIL.body = ['Dear committee,', '', intro, '', ...lines, '', 'Timeline form for signatures (older SKHS form, still in use):', FORM_URL, '', 'Best regards,', signoff, 'Chair'].join('\n');
   $('#mailTo').textContent = MAIL.to || 'No email addresses yet';
   $('#mailTo').classList.toggle('empty', !MAIL.to);
   $('#mailSubj').textContent = MAIL.subj;

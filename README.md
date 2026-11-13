@@ -1,6 +1,6 @@
 # SKHS Comps Scheduler
 
-A browser tool that builds the full timeline for a Science PhD comprehensive exam in the School of Kinesiology and Health Studies (SKHS) at Queen's University. Enter one start date. The tool sets every deadline in business days, following the *SKHS Comprehensive Exam Forms and Procedures (Science PhD)*, version of 2 November 2026.
+A browser tool that builds the full timeline for a Science PhD comprehensive exam in the School of Kinesiology and Health Studies (SKHS) at Queen's University. Enter one start date. The tool sets every deadline in business days, following the *SKHS Comprehensive Exam Forms and Procedures (Science PhD)*, version of 2 November 2026. The older SKHS [timeline form (PDF)](https://skhs.queensu.ca/sites/skhswww/files/uploaded_files/Grad%20Files/Science_PhDComprehensiveExam_TimelineForm_Instructions.pdf), which is still used for signatures, is linked at the top of the page and in the committee email.
 
 **Use it online:** https://gmqueens.github.io/comps-scheduler/
 
