@@ -15,6 +15,10 @@ A browser tool that builds the full timeline for a Science PhD comprehensive exa
 - Shows a colour-coded month calendar with the breaks between exams highlighted.
 - Downloads the dates as an `.ics` calendar file (committee dates, Candidate dates, the oral exam only, or every date) to attach to the committee email. Meeting, written exam and oral start times are optional; without them the events are all-day.
 
+## Forms
+
+[`SKHS_CompsExam_Forms_Science_2026-11-13_fillable.pdf`](SKHS_CompsExam_Forms_Science_2026-11-13_fillable.pdf) is the SKHS forms and procedures document (13 November 2026) as a fillable PDF. The Planning Form (Appendix C) and Outcome Form (Appendix D) have text fields, single-choice verdict boxes and digital signature fields. The page links to it at the top.
+
 ## Running it
 
 No installation is needed. The whole tool is one file, `index.html`.
