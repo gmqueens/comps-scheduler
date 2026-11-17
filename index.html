@@ -227,8 +227,7 @@ textarea{width:100%;min-height:240px;font-family:var(--f-mono);font-size:12px;li
     <div class="eyebrow">SKHS · Science PhD comprehensive exam</div>
     <h1>Comps Scheduler</h1>
     <p class="lede">Enter the organizing meeting, the start date and the three questions. The schedule follows the SKHS Forms and Procedures (version of 2 Nov 2026). Business days exclude weekends, Ontario statutory holidays, the Queen's winter closure and any dates you block.</p>
-    <p class="formlink"><a href="SKHS_CompsExam_Forms_Science_2026-11-13_fillable.pdf" download>Forms and procedures, 13 Nov 2026 (fillable PDF)</a> <span class="hint">Includes the Planning Form (Appendix C) and Outcome Form (Appendix D) with fillable fields.</span></p>
-    <p class="formlink"><a href="https://skhs.queensu.ca/sites/skhswww/files/uploaded_files/Grad%20Files/Science_PhDComprehensiveExam_TimelineForm_Instructions.pdf" target="_blank" rel="noopener">Timeline form for signatures (PDF)</a> <span class="hint">An older SKHS form, still used for signatures. The dates here follow the 2 Nov 2026 procedures.</span></p>
+    <p class="formlink"><a href="SKHS_CompsExam_Forms_Science_2026-11-13_fillable.pdf" download>Forms and procedures, 13 Nov 2026 (fillable PDF)</a> <span class="hint">Use the fillable Planning Form (Appendix C) and Outcome Form (Appendix D) in this file for signatures.</span></p>
   </header>
 
   <div class="layout">
@@ -796,7 +795,7 @@ function buildICS(R, E, set){
 
 /* ---------- render ---------- */
 const MAIL = {to:'', subj:'', body:''};
-const FORM_URL = 'https://skhs.queensu.ca/sites/skhswww/files/uploaded_files/Grad%20Files/Science_PhDComprehensiveExam_TimelineForm_Instructions.pdf';
+const FORM_URL = 'https://gmqueens.github.io/comps-scheduler/SKHS_CompsExam_Forms_Science_2026-11-13_fillable.pdf';
 let LAST = null;
 
 function render(){
@@ -997,7 +996,7 @@ function render(){
     ? `Below is the schedule for ${candPoss} comprehensive exam. The proposed oral exam date is ${fmt(oralSel.date)}. Please confirm whether this date works for you. Examiner reports are due to me by ${fmt(oralSel.report)}.`
     : `Below is the schedule for ${candPoss} comprehensive exam. The oral exam can fall on any of the dates listed at the end. Please tell me which of those dates work for you.`;
   const signoff = (S.chair || 'Chair').replace(/^Dr\.?\s+/, '');
-  MAIL.body = ['Dear committee,', '', intro, '', ...lines, '', 'Timeline form for signatures (older SKHS form, still in use):', FORM_URL, '', 'Best regards,', signoff, 'Chair'].join('\n');
+  MAIL.body = ['Dear committee,', '', intro, '', ...lines, '', 'Forms for signatures (Planning Form and Outcome Form, fillable PDF):', FORM_URL, '', 'Best regards,', signoff, 'Chair'].join('\n');
   $('#mailTo').textContent = MAIL.to || 'No email addresses yet';
   $('#mailTo').classList.toggle('empty', !MAIL.to);
   $('#mailSubj').textContent = MAIL.subj;
